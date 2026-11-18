@@ -1,0 +1,20 @@
+flowchart TD
+    A[CIC-IDS-2017 CSV Files] --> B[Data Loading]
+    B --> C[Dataset Audit]
+    C --> D[Data Cleaning]
+    D --> E[Exploratory Data Analysis]
+    E --> F[Binary and Optional Multiclass Targets]
+    F --> G[Stratified Train-Test Split]
+    G --> H[Preprocessing Pipelines]
+    H --> I[Baseline ML Models]
+    H --> J[Ensemble Models]
+    I --> K[Evaluation]
+    J --> K
+    K --> L[Class Imbalance Experiments]
+    K --> M[Feature Selection]
+    K --> N[Hyperparameter Tuning]
+    L --> O[Explainability]
+    M --> O
+    N --> O
+    O --> P[Cybersecurity Interpretation]
+    P --> Q[Final Model]

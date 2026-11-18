@@ -1,0 +1,134 @@
+{
+  "task": "binary",
+  "train_rows": 190427,
+  "test_rows": 47607,
+  "model_choices": {
+    "Decision Tree": "Interpretable non-linear baseline that shows how tree splits separate benign and attack flows.",
+    "Logistic Regression": "Linear baseline that helps test whether the classes are separable with a simple decision boundary.",
+    "Random Forest": "Strong tree-based baseline and bagging ensemble; useful for feature importance and variance reduction.",
+    "Support Vector Machine": "Linear margin-based classifier used as a computationally feasible SVM baseline for large flow data.",
+    "K-Nearest Neighbors": "Distance-based baseline that is easy to understand, but prediction can be slow on large traffic datasets."
+  },
+  "results": {
+    "Decision Tree": {
+      "accuracy": 0.998214548280715,
+      "precision_attack": 0.9944328462073765,
+      "recall_attack": 0.9957031703634885,
+      "f1_attack": 0.9950676028549875,
+      "prediction_time_seconds": 0.03452591702807695,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38948,
+          48
+        ],
+        [
+          37,
+          8574
+        ]
+      ],
+      "roc_auc": 0.9972361374435147,
+      "average_precision": 0.9909371343130198,
+      "training_time_seconds": 6.548341500048991
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9499653412313315,
+      "precision_attack": 0.8692353289863664,
+      "recall_attack": 0.8514690512135641,
+      "f1_attack": 0.8602604716649067,
+      "prediction_time_seconds": 0.02505245804786682,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          37893,
+          1103
+        ],
+        [
+          1279,
+          7332
+        ]
+      ],
+      "roc_auc": 0.985245993684305,
+      "average_precision": 0.9439927792896983,
+      "training_time_seconds": 3.4191236670012586
+    },
+    "Random Forest": {
+      "accuracy": 0.9983195748524377,
+      "precision_attack": 0.996392412428721,
+      "recall_attack": 0.9943096039948902,
+      "f1_attack": 0.9953499186235759,
+      "prediction_time_seconds": 0.061493041983339936,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38965,
+          31
+        ],
+        [
+          49,
+          8562
+        ]
+      ],
+      "roc_auc": 0.9997448529213201,
+      "average_precision": 0.9982159921032483,
+      "training_time_seconds": 6.099150541995186
+    },
+    "Support Vector Machine": {
+      "accuracy": 0.9493141764866512,
+      "precision_attack": 0.8657932011331445,
+      "recall_attack": 0.8518174428057136,
+      "f1_attack": 0.8587484633846514,
+      "prediction_time_seconds": 0.025326167000457644,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          37859,
+          1137
+        ],
+        [
+          1276,
+          7335
+        ]
+      ],
+      "roc_auc": 0.9839751213834448,
+      "average_precision": 0.9450789831165759,
+      "training_time_seconds": 67.47212912503164
+    },
+    "K-Nearest Neighbors": {
+      "accuracy": 0.9890562312265003,
+      "precision_attack": 0.9655847145488029,
+      "recall_attack": 0.9742190221809314,
+      "f1_attack": 0.9698826521764263,
+      "prediction_time_seconds": 5.901146625052206,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38697,
+          299
+        ],
+        [
+          222,
+          8389
+        ]
+      ],
+      "roc_auc": 0.9969289347263867,
+      "average_precision": 0.9878593666904923,
+      "training_time_seconds": 1.1146125420345925
+    }
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "model_path": "D:\\Academics\\SEM5\\ML\\ML CP\\archive\\outputs\\models\\baseline_random_forest.joblib",
+  "model_type": "Random Forest",
+  "global_explainability_method": "Random Forest impurity-based feature importance",
+  "local_explanation_note": "Example explanations use globally important features and compare each flow's feature values with training medians. This is an interpretable proxy, not a SHAP value.",
+  "top_20_features": [
+    "Packet Length Variance",
+    "Avg Bwd Segment Size",
+    "Max Packet Length",
+    "Packet Length Std",
+    "Average Packet Size",
+    "Bwd Packet Length Std",
+    "Bwd Packet Length Max",
+    "Total Length of Bwd Packets",
+    "Bwd Packet Length Mean",
+    "Total Length of Fwd Packets",
+    "Destination Port",
+    "Subflow Fwd Bytes",
+    "PSH Flag Count",
+    "Fwd Packet Length Max",
+    "Subflow Fwd Packets",
+    "Total Fwd Packets",
+    "Packet Length Mean",
+    "ACK Flag Count",
+    "Fwd IAT Max",
+    "Fwd Header Length.1"
+  ],
+  "example_predictions": [
+    {
+      "case": "true_attack_detected",
+      "actual_label": "Attack",
+      "predicted_label": "Attack",
+      "attack_probability": 1.0,
+      "top_deviating_important_features": [
+        {
+          "feature": "Fwd IAT Max",
+          "value": 3197507.0,
+          "training_median": 48.0,
+          "relative_deviation": 65254.26530612245
+        },
+        {
+          "feature": "Bwd Packet Length Std",
+          "value": 14.54975045,
+          "training_median": 0.0,
+          "relative_deviation": 14.54975045
+        },
+        {
+          "feature": "Fwd Header Length.1",
+          "value": 296.0,
+          "training_median": 64.0,
+          "relative_deviation": 3.5692307692307694
+        },
+        {
+          "feature": "Total Fwd Packets",
+          "value": 9.0,
+          "training_median": 2.0,
+          "relative_deviation": 2.3333333333333335
+        },
+        {
+          "feature": "Subflow Fwd Packets",
+          "value": 9.0,
+          "training_median": 2.0,
+          "relative_deviation": 2.3333333333333335
+        },
+        {
+          "feature": "PSH Flag Count",
+          "value": 1.0,
+          "training_median": 0.0,
+          "relative_deviation": 1.0
+        },
+        {
+          "feature": "Bwd Packet Length Mean",
+          "value": 12.53333333,
+          "training_median": 81.0,
+          "relative_deviation": 0.8349593496341463
+        },
+        {
+          "feature": "Avg Bwd Segment Size",
+          "value": 12.53333333,
+          "training_median": 81.0,
+          "relative_deviation": 0.8349593496341463
+        }
+      ]
+    },
+    {
+      "case": "true_benign_detected",
+      "actual_label": "Benign",
+      "predicted_label": "Benign",
+      "attack_probability": 0.0,
+      "top_deviating_important_features": [
+        {
+          "feature": "Fwd IAT Max",
+          "value": 53678.0,
+          "training_median": 48.0,
+          "relative_deviation": 1094.4897959183672
+        },
+        {
+          "feature": "Bwd Packet Length Std",
+          "value": 777.5496309,
+          "training_median": 0.0,
+          "relative_deviation": 777.5496309
+        },
+        {
+          "feature": "Packet Length Variance",
+          "value": 327123.0238,
+          "training_median": 874.8,
+          "relative_deviation": 372.5145282027861
+        },
+        {
+          "feature": "Total Length of Bwd Packets",
+          "value": 5956.0,
+          "training_median": 140.0,
+          "relative_deviation": 41.248226950354606
+        },
+        {
+          "feature": "Bwd Packet Length Max",
+          "value": 1765.0,
+          "training_median": 90.0,
+          "relative_deviation": 18.406593406593405
+        },
+        {
+          "feature": "Packet Length Std",
+          "value": 571.9466967,
+          "training_median": 29.57701811,
+          "relative_deviation": 17.737821151782676
+        },
+        {
+          "feature": "Max Packet Length",
+          "value": 1765.0,
+          "training_median": 96.0,
+          "relative_deviation": 17.20618556701031
+        },
+        {
+          "feature": "Fwd Packet Length Max",
+          "value": 373.0,
+          "training_median": 38.0,
+          "relative_deviation": 8.58974358974359
+        }
+      ]
+    },
+    {
+      "case": "false_negative_attack_missed",
+      "actual_label": "Attack",
+      "predicted_label": "Benign",
+      "attack_probability": 0.27,
+      "top_deviating_important_features": [
+        {
+          "feature": "Fwd IAT Max",
+          "value": 1276.0,
+          "training_median": 48.0,
+          "relative_deviation": 25.06122448979592
+        },
+        {
+          "feature": "PSH Flag Count",
+          "value": 1.0,
+          "training_median": 0.0,
+          "relative_deviation": 1.0
+        },
+        {
+          "feature": "ACK Flag Count",
+          "value": 1.0,
+          "training_median": 0.0,
+          "relative_deviation": 1.0
+        },
+        {
+          "feature": "Packet Length Variance",
+          "value": 0.0,
+          "training_median": 874.8,
+          "relative_deviation": 0.9988581868006394
+        },
+        {
+          "feature": "Total Length of Bwd Packets",
+          "value": 0.0,
+          "training_median": 140.0,
+          "relative_deviation": 0.9929078014184397
+        },
+        {
+          "feature": "Max Packet Length",
+          "value": 0.0,
+          "training_median": 96.0,
+          "relative_deviation": 0.9896907216494846
+        },
+        {
+          "feature": "Bwd Packet Length Max",
+          "value": 0.0,
+          "training_median": 90.0,
+          "relative_deviation": 0.989010989010989
+        },
+        {
+          "feature": "Avg Bwd Segment Size",
+          "value": 0.0,
+          "training_median": 81.0,
+          "relative_deviation": 0.9878048780487805
+        }
+      ]
+    },
+    {
+      "case": "false_positive_false_alarm",
+      "actual_label": "Benign",
+      "predicted_label": "Attack",
+      "attack_probability": 0.85,
+      "top_deviating_important_features": [
+        {
+          "feature": "Packet Length Variance",
+          "value": 2252775.60606061,
+          "training_median": 874.8,
+          "relative_deviation": 2571.250064010745
+        },
+        {
+          "feature": "Fwd IAT Max",
+          "value": 125166.0,
+          "training_median": 48.0,
+          "relative_deviation": 2553.4285714285716
+        },
+        {
+          "feature": "Bwd Packet Length Std",
+          "value": 1899.1754000092,
+          "training_median": 0.0,
+          "relative_deviation": 1899.1754000092
+        },
+        {
+          "feature": "Total Length of Bwd Packets",
+          "value": 9636.0,
+          "training_median": 140.0,
+          "relative_deviation": 67.34751773049645
+        },
+        {
+          "feature": "Packet Length Std",
+          "value": 1500.9249168631,
+          "training_median": 29.57701811,
+          "relative_deviation": 48.11940436637626
+        },
+        {
+          "feature": "Bwd Packet Length Max",
+          "value": 4344.0,
+          "training_median": 90.0,
+          "relative_deviation": 46.747252747252745
+        },
+        {
+          "feature": "Max Packet Length",
+          "value": 4344.0,
+          "training_median": 96.0,
+          "relative_deviation": 43.79381443298969
+        },
+        {
+          "feature": "Avg Bwd Segment Size",
+          "value": 1927.2,
+          "training_median": 81.0,
+          "relative_deviation": 22.514634146341464
+        }
+      ]
+    }
+  ],
+  "shap_note": "SHAP was not required for this run; it can be added later if runtime and package support are available."
+}

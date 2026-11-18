@@ -1,0 +1,14 @@
+{
+  "dataset_id": "sample_cic_ids_binary",
+  "target_column": "target",
+  "feature_columns": [],
+  "task_type": "binary",
+  "evaluation_strategy": "stratified_split",
+  "test_split_ratio": 0.2,
+  "cv_folds": 5,
+  "random_seed": 42,
+  "selected_models": [
+    "decision_tree",
+    "random_forest"
+  ]
+}

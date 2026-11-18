@@ -1,0 +1,6 @@
+{
+  "reference_dataset_id": "sample_cic_ids_binary",
+  "incoming_dataset_id": "sample_drifted_traffic",
+  "feature_columns": [],
+  "alpha_significance": 0.05
+}

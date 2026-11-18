@@ -1,0 +1,42 @@
+{
+  "task": "binary",
+  "train_shape": [
+    190427,
+    79
+  ],
+  "test_shape": [
+    47607,
+    79
+  ],
+  "feature_count": 78,
+  "same_feature_order": true,
+  "train_distribution": {
+    "Attack": {
+      "count": 34444,
+      "percentage": 18.0878
+    },
+    "Benign": {
+      "count": 155983,
+      "percentage": 81.9122
+    }
+  },
+  "test_distribution": {
+    "Attack": {
+      "count": 8611,
+      "percentage": 18.0877
+    },
+    "Benign": {
+      "count": 38996,
+      "percentage": 81.9123
+    }
+  },
+  "train_invalid_values": {
+    "missing_values": 0,
+    "infinite_values": 0
+  },
+  "test_invalid_values": {
+    "missing_values": 0,
+    "infinite_values": 0
+  },
+  "exact_train_test_overlap_rows": 0
+}

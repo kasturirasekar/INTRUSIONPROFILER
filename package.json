@@ -1,0 +1,13 @@
+{
+  "name": "cyber-attack-network-intrusion-profiler",
+  "version": "2.0.0",
+  "description": "Enterprise Cyber-Attack Network Intrusion Profiler Using Ensemble Learning",
+  "scripts": {
+    "frontend:dev": "npm run dev --prefix frontend",
+    "frontend:build": "npm run build --prefix frontend",
+    "backend:dev": "uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "backend:test": "python -m unittest backend/tests/test_api.py"
+  },
+  "author": "Antigravity Engineering",
+  "license": "MIT"
+}

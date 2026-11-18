@@ -1,0 +1,152 @@
+{
+  "task": "binary",
+  "train_rows": 190427,
+  "test_rows": 47607,
+  "note": "Samplers are inside pipelines, so they are fitted only on training data.",
+  "results": {
+    "Logistic Regression - No Balancing": {
+      "accuracy": 0.949986346545676,
+      "precision_attack": 0.8692508297771455,
+      "recall_attack": 0.8515851817442806,
+      "f1_attack": 0.8603273303220508,
+      "prediction_time_seconds": 0.06007110000064131,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          37893,
+          1103
+        ],
+        [
+          1278,
+          7333
+        ]
+      ],
+      "roc_auc": 0.9852332388616807,
+      "average_precision": 0.9436217585851088,
+      "training_time_seconds": 6.068631100002676
+    },
+    "Logistic Regression - Class Weight": {
+      "accuracy": 0.9293591278593484,
+      "precision_attack": 0.7292904578818595,
+      "recall_attack": 0.9692254093601208,
+      "f1_attack": 0.8323111443530292,
+      "prediction_time_seconds": 0.06245359999957145,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          35898,
+          3098
+        ],
+        [
+          265,
+          8346
+        ]
+      ],
+      "roc_auc": 0.9839172273537395,
+      "average_precision": 0.9325942076773139,
+      "training_time_seconds": 7.049818700001197
+    },
+    "Logistic Regression - Random Undersampling": {
+      "accuracy": 0.9267544688806268,
+      "precision_attack": 0.7215879605604567,
+      "recall_attack": 0.9688770177679712,
+      "f1_attack": 0.8271451940712834,
+      "prediction_time_seconds": 0.05937739999717451,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          35777,
+          3219
+        ],
+        [
+          268,
+          8343
+        ]
+      ],
+      "roc_auc": 0.9834090192933325,
+      "average_precision": 0.9308124500193949,
+      "training_time_seconds": 2.6926502999995137
+    },
+    "Logistic Regression - Random Oversampling": {
+      "accuracy": 0.9302203457474741,
+      "precision_attack": 0.7308598865124399,
+      "recall_attack": 0.9722448031587504,
+      "f1_attack": 0.8344463271205024,
+      "prediction_time_seconds": 0.05460279999897466,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          35913,
+          3083
+        ],
+        [
+          239,
+          8372
+        ]
+      ],
+      "roc_auc": 0.984309971957973,
+      "average_precision": 0.9345300259291325,
+      "training_time_seconds": 12.01749479999853
+    },
+    "Logistic Regression - SMOTE": {
+      "accuracy": 0.9295481756884492,
+      "precision_attack": 0.728664636798608,
+      "recall_attack": 0.9727093252816166,
+      "f1_attack": 0.8331841241420471,
+      "prediction_time_seconds": 0.05519060000005993,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          35877,
+          3119
+        ],
+        [
+          235,
+          8376
+        ]
+      ],
+      "roc_auc": 0.9842514048977017,
+      "average_precision": 0.9336041706006003,
+      "training_time_seconds": 13.083012099999905
+    },
+    "Random Forest - Class Weight": {
+      "accuracy": 0.9986766651962946,
+      "precision_attack": 0.9947904607548044,
+      "recall_attack": 0.9979096504471026,
+      "f1_attack": 0.9963476143544553,
+      "prediction_time_seconds": 0.09701889999996638,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38951,
+          45
+        ],
+        [
+          18,
+          8593
+        ]
+      ],
+      "roc_auc": 0.9997673071269209,
+      "average_precision": 0.9979760965910642,
+      "training_time_seconds": 6.266546599999856
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "experiment_name": "Demo: full CIC sample split",
+  "dataset_id": "sample_cic_ids_binary",
+  "target_column": "target",
+  "feature_columns": null,
+  "test_split_ratio": 0.2,
+  "random_seed": 42,
+  "model_settings": {
+    "strategy": "random_forest",
+    "n_estimators": 50,
+    "base_classifiers": []
+  }
+}

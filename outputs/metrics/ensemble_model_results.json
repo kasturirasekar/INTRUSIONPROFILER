@@ -1,0 +1,159 @@
+{
+  "task": "binary",
+  "train_rows": 190427,
+  "test_rows": 47607,
+  "model_choices": {
+    "Random Forest Bagging": "Uses bootstrap samples and many decision trees to reduce variance.",
+    "AdaBoost": "Trains weak learners sequentially and increases focus on previously misclassified flows.",
+    "Gradient Boosting": "Builds trees sequentially to correct residual errors from earlier learners.",
+    "Hard Voting": "Combines class labels from multiple models using majority vote.",
+    "Soft Voting": "Averages predicted probabilities, so confident models influence the final decision more.",
+    "Stacking": "Feeds base-model predictions into a meta-classifier that learns how to combine them."
+  },
+  "results": {
+    "Random Forest Bagging": {
+      "accuracy": 0.9983195748524377,
+      "precision_attack": 0.996392412428721,
+      "recall_attack": 0.9943096039948902,
+      "f1_attack": 0.9953499186235759,
+      "prediction_time_seconds": 0.06715458299731836,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38965,
+          31
+        ],
+        [
+          49,
+          8562
+        ]
+      ],
+      "roc_auc": 0.9997448529213201,
+      "average_precision": 0.9982159921032483,
+      "training_time_seconds": 6.050184957974125
+    },
+    "AdaBoost": {
+      "accuracy": 0.9834268069821664,
+      "precision_attack": 0.9660390848427073,
+      "recall_attack": 0.9414702125188712,
+      "f1_attack": 0.9535964241604423,
+      "prediction_time_seconds": 0.296267416968476,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38711,
+          285
+        ],
+        [
+          504,
+          8107
+        ]
+      ],
+      "roc_auc": 0.9960710798420448,
+      "average_precision": 0.9872476796250531,
+      "training_time_seconds": 37.917997167038266
+    },
+    "Gradient Boosting": {
+      "accuracy": 0.9947696767282123,
+      "precision_attack": 0.9942080378250591,
+      "recall_attack": 0.9767738938566949,
+      "f1_attack": 0.9854138597621698,
+      "prediction_time_seconds": 0.06370054098078981,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38947,
+          49
+        ],
+        [
+          200,
+          8411
+        ]
+      ],
+      "roc_auc": 0.9989199795127113,
+      "average_precision": 0.9969245200643575,
+      "training_time_seconds": 71.17037120903842
+    },
+    "Hard Voting": {
+      "accuracy": 0.9975213729073455,
+      "precision_attack": 0.9970736275313122,
+      "recall_attack": 0.9891998606433632,
+      "f1_attack": 0.9931211379270141,
+      "prediction_time_seconds": 0.1763493330217898,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38971,
+          25
+        ],
+        [
+          93,
+          8518
+        ]
+      ],
+      "roc_auc": null,
+      "average_precision": null,
+      "training_time_seconds": 17.293782332970295
+    },
+    "Soft Voting": {
+      "accuracy": 0.9977524313651354,
+      "precision_attack": 0.9964969640354975,
+      "recall_attack": 0.9910579491348276,
+      "f1_attack": 0.9937700145560407,
+      "prediction_time_seconds": 0.10392962500918657,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38966,
+          30
+        ],
+        [
+          77,
+          8534
+        ]
+      ],
+      "roc_auc": 0.9995274432025039,
+      "average_precision": 0.9983614590766765,
+      "training_time_seconds": 17.05624879099196
+    },
+    "Stacking": {
+      "accuracy": 0.9985086226815384,
+      "precision_attack": 0.9970896391152503,
+      "recall_attack": 0.9946579955870398,
+      "f1_attack": 0.9958723330038951,
+      "prediction_time_seconds": 0.10540583304828033,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38971,
+          25
+        ],
+        [
+          46,
+          8565
+        ]
+      ],
+      "roc_auc": 0.9998912549374386,
+      "average_precision": 0.9992826635683207,
+      "training_time_seconds": 50.06743212498259
+    }
+  }
+}

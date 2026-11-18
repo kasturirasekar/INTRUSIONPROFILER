@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ensemble IDS Presentation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #586475;
+      --accent: #2f6f73;
+      --danger: #b84a4a;
+      --line: #d8dee8;
+      --paper: #ffffff;
+      --soft: #f5f7fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--soft);
+    }
+    .deck {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+    }
+    section {
+      min-height: 100vh;
+      padding: 48px 64px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 24px;
+    }
+    h1, h2 {
+      margin: 0;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+    h1 { font-size: 48px; color: var(--accent); }
+    h2 { font-size: 36px; color: var(--accent); }
+    p, li { font-size: 23px; line-height: 1.42; }
+    ul { margin: 0; padding-left: 28px; }
+    .subtitle { font-size: 26px; color: var(--muted); max-width: 920px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center; }
+    .metric {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: #fbfcfe;
+    }
+    .box strong { display: block; font-size: 30px; color: var(--accent); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 18px;
+      background: white;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+    }
+    th { color: var(--accent); }
+    img {
+      width: 100%;
+      max-height: 66vh;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+    footer { color: var(--muted); font-size: 16px; }
+    .danger { color: var(--danger); font-weight: 700; }
+  </style>
+</head>
+<body>
+<main class="deck">
+  <section>
+    <div>
+      <h1>Cybersecurity Attack Detection Using Ensemble Learning</h1>
+      <p class="subtitle">Machine learning-based intrusion detection on CIC-IDS-2017</p>
+    </div>
+    <div class="metric">
+      <div class="box"><strong>2.83M</strong><p>flows audited</p></div>
+      <div class="box"><strong>78</strong><p>features</p></div>
+      <div class="box"><strong>0.9953</strong><p>Random Forest attack F1</p></div>
+    </div>
+    <footer>Slide 1</footer>
+  </section>
+
+  <section>
+    <h2>Motivation</h2>
+    <ul>
+      <li>Modern networks produce large traffic volumes.</li>
+      <li>Manual intrusion detection is difficult and slow.</li>
+      <li>Machine learning can learn suspicious flow patterns.</li>
+      <li>In cybersecurity, missing attacks is often worse than false alarms.</li>
+    </ul>
+    <footer>Slide 2</footer>
+  </section>
+
+  <section>
+    <h2>Problem Statement</h2>
+    <ul>
+      <li>Input: CIC-IDS-2017 network-flow feature vectors.</li>
+      <li>Primary output: Benign or Attack.</li>
+      <li>Secondary output: multiclass attack type, if feasible.</li>
+      <li>Main comparison: individual classifiers vs ensemble models.</li>
+    </ul>
+    <footer>Slide 3</footer>
+  </section>
+
+  <section>
+    <h2>Dataset</h2>
+    <div class="grid">
+      <ul>
+        <li>CIC-IDS-2017 from Canadian Institute for Cybersecurity.</li>
+        <li>Five working days of benign and attack traffic.</li>
+        <li>Flow features extracted using CICFlowMeter.</li>
+        <li>Attacks include DDoS, DoS, PortScan, Bot, Brute Force, Web Attack, Infiltration, and Heartbleed.</li>
+      </ul>
+      <img src="../outputs/figures/class_distribution_multiclass.png" alt="Multiclass distribution">
+    </div>
+    <footer>Slide 4</footer>
+  </section>
+
+  <section>
+    <h2>Dataset Audit</h2>
+    <div class="grid">
+      <ul>
+        <li>Total rows audited: 2,830,743.</li>
+        <li>Estimated duplicate rows: 308,381.</li>
+        <li>Missing values in Flow Bytes/s.</li>
+        <li>Infinite values in Flow Bytes/s and Flow Packets/s.</li>
+        <li>Web Attack labels required normalization.</li>
+      </ul>
+      <img src="../outputs/figures/data_quality_issues.png" alt="Data quality issues">
+    </div>
+    <footer>Slide 5</footer>
+  </section>
+
+  <section>
+    <h2>Preprocessing</h2>
+    <ul>
+      <li>Cleaned column names and labels.</li>
+      <li>Replaced infinite values with missing values.</li>
+      <li>Dropped invalid rows and exact duplicates.</li>
+      <li>Created binary labels.</li>
+      <li>Used 80/20 stratified train-test split.</li>
+      <li>Fitted scaling and model transformations only on training data.</li>
+    </ul>
+    <footer>Slide 6</footer>
+  </section>
+
+  <section>
+    <h2>Class Imbalance</h2>
+    <div class="grid">
+      <ul>
+        <li>Benign traffic dominates the dataset.</li>
+        <li>Some attacks have extremely few examples.</li>
+        <li>Accuracy alone is misleading.</li>
+        <li>Attack recall is a key cybersecurity metric.</li>
+      </ul>
+      <img src="../outputs/figures/class_distribution_binary.png" alt="Binary distribution">
+    </div>
+    <footer>Slide 7</footer>
+  </section>
+
+  <section>
+    <h2>Baseline Models</h2>
+    <table>
+      <tr><th>Model</th><th>Accuracy</th><th>Attack Recall</th><th>Attack F1</th><th>Train Time s</th></tr>
+      <tr><td>Decision Tree</td><td>0.9982</td><td>0.9957</td><td>0.9951</td><td>6.97</td></tr>
+      <tr><td>Logistic Regression</td><td>0.9499</td><td>0.8510</td><td>0.8600</td><td>3.83</td></tr>
+      <tr><td>Random Forest</td><td>0.9983</td><td>0.9943</td><td>0.9953</td><td>6.49</td></tr>
+      <tr><td>SVM</td><td>0.9493</td><td>0.8517</td><td>0.8587</td><td>67.90</td></tr>
+      <tr><td>KNN</td><td>0.9891</td><td>0.9742</td><td>0.9699</td><td>1.08</td></tr>
+    </table>
+    <footer>Slide 8</footer>
+  </section>
+
+  <section>
+    <h2>Ensemble Methods</h2>
+    <ul>
+      <li>Bagging: Random Forest reduces variance by averaging many trees.</li>
+      <li>Boosting: AdaBoost and Gradient Boosting learn sequentially from errors.</li>
+      <li>Voting: combines predictions from multiple classifiers.</li>
+      <li>Stacking: trains a meta-model on base-model predictions.</li>
+    </ul>
+    <footer>Slide 9</footer>
+  </section>
+
+  <section>
+    <h2>Ensemble Results</h2>
+    <table>
+      <tr><th>Model</th><th>Accuracy</th><th>Attack Recall</th><th>Attack F1</th><th>Train Time s</th></tr>
+      <tr><td>Random Forest Bagging</td><td>0.9983</td><td>0.9943</td><td>0.9953</td><td>6.52</td></tr>
+      <tr><td>AdaBoost</td><td>0.9834</td><td>0.9415</td><td>0.9536</td><td>38.94</td></tr>
+      <tr><td>Gradient Boosting</td><td>0.9948</td><td>0.9768</td><td>0.9854</td><td>76.31</td></tr>
+      <tr><td>Soft Voting</td><td>0.9978</td><td>0.9912</td><td>0.9938</td><td>19.51</td></tr>
+      <tr><td>Stacking</td><td>0.9986</td><td>0.9951</td><td>0.9960</td><td>56.98</td></tr>
+    </table>
+    <footer>Slide 10</footer>
+  </section>
+
+  <section>
+    <h2>Model Comparison</h2>
+    <img src="../outputs/figures/model_performance_comparison.png" alt="Model performance comparison">
+    <footer>Slide 11</footer>
+  </section>
+
+  <section>
+    <h2>Confusion Matrix</h2>
+    <p>Random Forest missed <span class="danger">49 attacks</span> and produced 31 false alarms.</p>
+    <img src="../outputs/figures/confusion_matrices_major_models.png" alt="Confusion matrices">
+    <footer>Slide 12</footer>
+  </section>
+
+  <section>
+    <h2>Feature Importance</h2>
+    <div class="grid">
+      <ul>
+        <li>Avg Bwd Segment Size</li>
+        <li>Packet Length Variance</li>
+        <li>Max Packet Length</li>
+        <li>Packet Length Std</li>
+        <li>Average Packet Size</li>
+        <li>Destination Port</li>
+      </ul>
+      <img src="../outputs/figures/top_20_rf_feature_importance.png" alt="Top feature importance">
+    </div>
+    <footer>Slide 13</footer>
+  </section>
+
+  <section>
+    <h2>Limitations</h2>
+    <ul>
+      <li>Main experiment used a development sample.</li>
+      <li>Random split may be optimistic for network traffic.</li>
+      <li>Dataset artifacts may inflate results.</li>
+      <li>Rare multiclass attacks are difficult to learn reliably.</li>
+      <li>Real deployment needs live network testing.</li>
+    </ul>
+    <footer>Slide 14</footer>
+  </section>
+
+  <section>
+    <h2>Conclusion</h2>
+    <ul>
+      <li>Ensemble learning outperformed simple linear baselines.</li>
+      <li>Stacking achieved the highest F1-score.</li>
+      <li>Random Forest was selected as the practical final model.</li>
+      <li>Cybersecurity evaluation must emphasize recall, leakage control, and computational cost.</li>
+    </ul>
+    <footer>Slide 15</footer>
+  </section>
+</main>
+</body>
+</html>

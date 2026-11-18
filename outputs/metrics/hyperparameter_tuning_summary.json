@@ -1,0 +1,101 @@
+{
+  "train_rows_used_for_cv": 40000,
+  "test_rows_used_for_final_evaluation": 47607,
+  "cv_folds": 3,
+  "refit_metric": "attack_f1",
+  "results": {
+    "Tuned Logistic Regression": {
+      "accuracy": 0.9513096813493814,
+      "precision_attack": 0.8018225419664269,
+      "recall_attack": 0.9707351062594356,
+      "f1_attack": 0.8782307207396511,
+      "prediction_time_seconds": 0.07423670000025595,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          36930,
+          2066
+        ],
+        [
+          252,
+          8359
+        ]
+      ],
+      "roc_auc": 0.9864202205827304,
+      "average_precision": 0.9459983721577411,
+      "tuning_time_seconds": 13.143863999999667,
+      "best_cv_attack_f1": 0.8780017561233319,
+      "best_params": {
+        "model__solver": "lbfgs",
+        "model__class_weight": "balanced",
+        "model__C": 10.0
+      }
+    },
+    "Tuned Random Forest": {
+      "accuracy": 0.9977944419938244,
+      "precision_attack": 0.9923593424403797,
+      "recall_attack": 0.9954709093020555,
+      "f1_attack": 0.9939126905907589,
+      "prediction_time_seconds": 0.10214380000070378,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38930,
+          66
+        ],
+        [
+          39,
+          8572
+        ]
+      ],
+      "roc_auc": 0.9992399206734013,
+      "average_precision": 0.9968289124735551,
+      "tuning_time_seconds": 83.23701430000074,
+      "best_cv_attack_f1": 0.9928351211151814,
+      "best_params": {
+        "model__n_estimators": 160,
+        "model__min_samples_split": 2,
+        "model__max_features": null,
+        "model__max_depth": null,
+        "model__class_weight": "balanced"
+      }
+    },
+    "Tuned Gradient Boosting": {
+      "accuracy": 0.9976053941647237,
+      "precision_attack": 0.9955674792954625,
+      "recall_attack": 0.991174079665544,
+      "f1_attack": 0.9933659217877095,
+      "prediction_time_seconds": 0.1447147999988374,
+      "confusion_matrix_labels": [
+        "Benign",
+        "Attack"
+      ],
+      "confusion_matrix": [
+        [
+          38958,
+          38
+        ],
+        [
+          76,
+          8535
+        ]
+      ],
+      "roc_auc": 0.9997797254342622,
+      "average_precision": 0.9989775629478871,
+      "tuning_time_seconds": 257.1404325000003,
+      "best_cv_attack_f1": 0.9917653840725643,
+      "best_params": {
+        "model__subsample": 0.9,
+        "model__n_estimators": 120,
+        "model__max_depth": 3,
+        "model__learning_rate": 0.2
+      }
+    }
+  }
+}

@@ -1,0 +1,451 @@
+{
+  "dataset": "CIC-IDS-2017",
+  "data_dir": "D:\\Academics\\SEM5\\ML\\ML CP\\archive",
+  "file_audits": [
+    {
+      "file": "Monday-WorkingHours.pcap_ISCX.csv",
+      "size_mb": 168.73,
+      "rows": 529918,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 26935,
+      "missing_total": 64,
+      "infinite_total": 810,
+      "columns_with_missing": {
+        "Flow Bytes/s": 64
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 373,
+        "Flow Packets/s": 437
+      },
+      "label_counts": {
+        "BENIGN": 529918
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Tuesday-WorkingHours.pcap_ISCX.csv",
+      "size_mb": 128.82,
+      "rows": 445909,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 24065,
+      "missing_total": 201,
+      "infinite_total": 327,
+      "columns_with_missing": {
+        "Flow Bytes/s": 201
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 63,
+        "Flow Packets/s": 264
+      },
+      "label_counts": {
+        "BENIGN": 432074,
+        "FTP-Patator": 7938,
+        "SSH-Patator": 5897
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Wednesday-workingHours.pcap_ISCX.csv",
+      "size_mb": 214.74,
+      "rows": 692703,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 81909,
+      "missing_total": 1008,
+      "infinite_total": 1586,
+      "columns_with_missing": {
+        "Flow Bytes/s": 1008
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 289,
+        "Flow Packets/s": 1297
+      },
+      "label_counts": {
+        "BENIGN": 440031,
+        "DoS GoldenEye": 10293,
+        "DoS Hulk": 231073,
+        "DoS Slowhttptest": 5499,
+        "DoS slowloris": 5796,
+        "Heartbleed": 11
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv",
+      "size_mb": 49.61,
+      "rows": 170366,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 6066,
+      "missing_total": 20,
+      "infinite_total": 250,
+      "columns_with_missing": {
+        "Flow Bytes/s": 20
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 115,
+        "Flow Packets/s": 135
+      },
+      "label_counts": {
+        "BENIGN": 168186,
+        "Web Attack \ufffd Brute Force": 1507,
+        "Web Attack \ufffd Sql Injection": 21,
+        "Web Attack \ufffd XSS": 652
+      },
+      "suspicious_labels": [
+        "Web Attack \ufffd Brute Force",
+        "Web Attack \ufffd Sql Injection",
+        "Web Attack \ufffd XSS"
+      ],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv",
+      "size_mb": 79.25,
+      "rows": 288602,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 35630,
+      "missing_total": 18,
+      "infinite_total": 396,
+      "columns_with_missing": {
+        "Flow Bytes/s": 18
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 189,
+        "Flow Packets/s": 207
+      },
+      "label_counts": {
+        "BENIGN": 288566,
+        "Infiltration": 36
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Friday-WorkingHours-Morning.pcap_ISCX.csv",
+      "size_mb": 55.62,
+      "rows": 191033,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 6888,
+      "missing_total": 28,
+      "infinite_total": 216,
+      "columns_with_missing": {
+        "Flow Bytes/s": 28
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 94,
+        "Flow Packets/s": 122
+      },
+      "label_counts": {
+        "BENIGN": 189067,
+        "Bot": 1966
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv",
+      "size_mb": 73.34,
+      "rows": 286467,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 72353,
+      "missing_total": 15,
+      "infinite_total": 727,
+      "columns_with_missing": {
+        "Flow Bytes/s": 15
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 356,
+        "Flow Packets/s": 371
+      },
+      "label_counts": {
+        "BENIGN": 127537,
+        "PortScan": 158930
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    },
+    {
+      "file": "Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv",
+      "size_mb": 73.55,
+      "rows": 225745,
+      "columns": 79,
+      "raw_first_columns": [
+        " Destination Port",
+        " Flow Duration",
+        " Total Fwd Packets",
+        " Total Backward Packets",
+        "Total Length of Fwd Packets",
+        " Total Length of Bwd Packets",
+        " Fwd Packet Length Max",
+        " Fwd Packet Length Min",
+        " Fwd Packet Length Mean",
+        " Fwd Packet Length Std"
+      ],
+      "clean_first_columns": [
+        "Destination Port",
+        "Flow Duration",
+        "Total Fwd Packets",
+        "Total Backward Packets",
+        "Total Length of Fwd Packets",
+        "Total Length of Bwd Packets",
+        "Fwd Packet Length Max",
+        "Fwd Packet Length Min",
+        "Fwd Packet Length Mean",
+        "Fwd Packet Length Std"
+      ],
+      "duplicate_rows": 2633,
+      "missing_total": 4,
+      "infinite_total": 64,
+      "columns_with_missing": {
+        "Flow Bytes/s": 4
+      },
+      "columns_with_infinite": {
+        "Flow Bytes/s": 30,
+        "Flow Packets/s": 34
+      },
+      "label_counts": {
+        "BENIGN": 97718,
+        "DDoS": 128027
+      },
+      "suspicious_labels": [],
+      "dtype_counts": {
+        "int64": 54,
+        "float64": 24,
+        "str": 1
+      }
+    }
+  ],
+  "combined_audit": {
+    "total_rows": 2830743,
+    "total_columns": 79,
+    "combined_label_counts": {
+      "BENIGN": 2273097,
+      "Bot": 1966,
+      "DDoS": 128027,
+      "DoS GoldenEye": 10293,
+      "DoS Hulk": 231073,
+      "DoS Slowhttptest": 5499,
+      "DoS slowloris": 5796,
+      "FTP-Patator": 7938,
+      "Heartbleed": 11,
+      "Infiltration": 36,
+      "PortScan": 158930,
+      "SSH-Patator": 5897,
+      "Web Attack \ufffd Brute Force": 1507,
+      "Web Attack \ufffd Sql Injection": 21,
+      "Web Attack \ufffd XSS": 652
+    },
+    "combined_missing_by_column": {
+      "Flow Bytes/s": 1358
+    },
+    "combined_infinite_by_column": {
+      "Flow Bytes/s": 1509,
+      "Flow Packets/s": 2867
+    },
+    "combined_duplicate_rows_estimate": 308381,
+    "suspicious_labels": [
+      "Web Attack \ufffd Brute Force",
+      "Web Attack \ufffd Sql Injection",
+      "Web Attack \ufffd XSS"
+    ],
+    "column_mismatches": {}
+  }
+}

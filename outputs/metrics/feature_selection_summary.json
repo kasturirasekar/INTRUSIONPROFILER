@@ -1,0 +1,50 @@
+{
+  "top_k": 20,
+  "top_features": [
+    "Packet Length Variance",
+    "Packet Length Std",
+    "Avg Bwd Segment Size",
+    "Average Packet Size",
+    "Max Packet Length",
+    "Bwd Packet Length Mean",
+    "Bwd Packet Length Max",
+    "Bwd Packet Length Std",
+    "Packet Length Mean",
+    "Fwd IAT Max",
+    "Destination Port",
+    "Init_Win_bytes_backward",
+    "Total Length of Fwd Packets",
+    "Fwd IAT Std",
+    "Fwd Packet Length Max",
+    "Subflow Fwd Bytes",
+    "Fwd IAT Total",
+    "Flow IAT Max",
+    "Total Length of Bwd Packets",
+    "Fwd IAT Mean"
+  ],
+  "reduced_random_forest_metrics": {
+    "accuracy": 0.9968912134770097,
+    "precision_attack": 0.9918633034987795,
+    "recall_attack": 0.990941818604111,
+    "f1_attack": 0.99140234692692,
+    "prediction_time_seconds": 0.0485489000002417,
+    "confusion_matrix_labels": [
+      "Benign",
+      "Attack"
+    ],
+    "confusion_matrix": [
+      [
+        38926,
+        70
+      ],
+      [
+        78,
+        8533
+      ]
+    ],
+    "roc_auc": 0.9993973994027467,
+    "average_precision": 0.9975097514736232,
+    "training_time_seconds": 4.359150399999635
+  },
+  "note": "Feature selectors are fitted using the training set only."
+}

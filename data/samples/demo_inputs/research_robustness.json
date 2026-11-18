@@ -1,0 +1,10 @@
+{
+  "dataset_id": "sample_cic_ids_binary",
+  "target_column": "target",
+  "feature_columns": [],
+  "stress_type": "missing_values",
+  "stress_intensity": 0.1,
+  "baseline_model_id": "decision_tree",
+  "ensemble_model_id": "random_forest",
+  "random_seed": 42
+}

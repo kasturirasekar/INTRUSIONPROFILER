@@ -1,0 +1,59 @@
+{
+  "task": "multiclass",
+  "cleaning_summary": {
+    "rows_before_cleaning": 250000,
+    "rows_removed_missing_or_infinite": 244,
+    "rows_removed_duplicates": 11722,
+    "rows_after_cleaning": 238034,
+    "sample_rows_requested": 250000
+  },
+  "feature_count": 78,
+  "split_summary": {
+    "train_size": 190424,
+    "test_size": 47607,
+    "train_distribution": {
+      "BENIGN": 155982,
+      "Bot": 131,
+      "DDoS": 8974,
+      "DoS GoldenEye": 718,
+      "DoS Hulk": 12639,
+      "DoS Slowhttptest": 356,
+      "DoS slowloris": 389,
+      "FTP-Patator": 448,
+      "PortScan": 10362,
+      "SSH-Patator": 281,
+      "Web Attack - Brute Force": 90,
+      "Web Attack - XSS": 54
+    },
+    "test_distribution": {
+      "BENIGN": 38997,
+      "Bot": 33,
+      "DDoS": 2243,
+      "DoS GoldenEye": 179,
+      "DoS Hulk": 3160,
+      "DoS Slowhttptest": 89,
+      "DoS slowloris": 97,
+      "FTP-Patator": 112,
+      "PortScan": 2591,
+      "SSH-Patator": 70,
+      "Web Attack - Brute Force": 23,
+      "Web Attack - XSS": 13
+    }
+  },
+  "label_classes": [
+    "BENIGN",
+    "Bot",
+    "DDoS",
+    "DoS GoldenEye",
+    "DoS Hulk",
+    "DoS Slowhttptest",
+    "DoS slowloris",
+    "FTP-Patator",
+    "PortScan",
+    "SSH-Patator",
+    "Web Attack - Brute Force",
+    "Web Attack - XSS"
+  ],
+  "drop_rare_classes_min": 5,
+  "leakage_note": "Cleaning removes invalid rows and exact duplicates before splitting. Imputation, scaling, feature selection, and oversampling must be fitted only on training data."
+}
