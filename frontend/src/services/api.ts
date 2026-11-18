@@ -9,6 +9,8 @@ import {
   ModelPerformanceData,
   FeatureImportanceDetail,
   PredictionBatchResponse,
+  InteractivePredictionResponse,
+  PredictionSchemaResponse,
 } from '../types';
 import {
   DatasetMetadata,
@@ -114,6 +116,16 @@ export const api = {
   },
 
   // Predictions
+  getPredictionSchema: async (): Promise<PredictionSchemaResponse> => {
+    const res = await apiClient.get<PredictionSchemaResponse>('/predict/schema');
+    return res.data;
+  },
+
+  predictInteractive: async (record: Record<string, any>): Promise<InteractivePredictionResponse> => {
+    const res = await apiClient.post<InteractivePredictionResponse>('/predict/interactive', { record });
+    return res.data;
+  },
+
   predictSingle: async (record: Record<string, any>): Promise<PredictionBatchResponse> => {
     const res = await apiClient.post<PredictionBatchResponse>('/predict', { record });
     return res.data;
@@ -373,6 +385,11 @@ export const api = {
 
   getStudioExperimentResults: async (expId: string): Promise<import('../types/studio').StudioExperimentResult> => {
     const res = await apiClient.get(`/studio/experiments/${expId}/results`);
+    return res.data;
+  },
+
+  predictStudioHeldoutSample: async (expId: string, sampleIndex: number): Promise<import('../types/studio').StudioSamplePredictionResponse> => {
+    const res = await apiClient.post(`/studio/experiments/${expId}/predict-sample`, { sample_index: sampleIndex });
     return res.data;
   },
 

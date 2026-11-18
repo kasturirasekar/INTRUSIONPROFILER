@@ -33,24 +33,24 @@ const DEFAULT_MODEL_CONFIG: ModelConfigSpec = {
   cv_folds: 5,
   n_estimators: 100,
   learning_rate: 0.1,
-  max_depth: 12,
+  max_depth: 8,
   base_classifiers: [
     {
       model_id: 'random_forest',
       enabled: true,
-      hyperparameters: { n_estimators: 100, max_depth: 12 },
+      hyperparameters: { n_estimators: 100, max_depth: 8, min_samples_leaf: 3, min_samples_split: 8 },
       weight: 2.0,
     },
     {
       model_id: 'extra_trees',
       enabled: true,
-      hyperparameters: { n_estimators: 100, max_depth: 12 },
+      hyperparameters: { n_estimators: 100, max_depth: 8, min_samples_leaf: 3, min_samples_split: 8 },
       weight: 1.5,
     },
     {
       model_id: 'decision_tree',
       enabled: true,
-      hyperparameters: { max_depth: 10 },
+      hyperparameters: { max_depth: 6, min_samples_split: 12, min_samples_leaf: 6 },
       weight: 1.0,
     },
     {
@@ -111,9 +111,9 @@ export const Studio: React.FC = () => {
     {
       id: 'results',
       num: '05',
-      label: 'Results',
+      label: 'Results & Predict',
       icon: Award,
-      disabled: !experimentResult,
+      disabled: false,
     },
   ];
 

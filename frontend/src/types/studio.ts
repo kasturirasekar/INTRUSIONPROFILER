@@ -86,6 +86,8 @@ export interface StudioExperimentResult {
   training_time_seconds: number;
   prediction_time_seconds: number;
   accuracy?: number | null;
+  training_accuracy?: number | null;
+  generalization_gap?: number | null;
   precision?: number | null;
   recall?: number | null;
   f1_score?: number | null;
@@ -105,15 +107,23 @@ export interface StudioExperimentResult {
   confusion_matrix?: ConfusionMatrixDict | null;
   total_evaluated_records: number;
   predicted_class_counts: Record<string, number>;
-  mean_confidence: number;
+  mean_confidence: number | null;
   predictions_preview: Array<{
     index: number;
     ground_truth: string;
     prediction: string;
-    confidence: number;
+    confidence: number | null;
     features: Record<string, number>;
   }>;
   created_at: string;
+}
+
+export interface StudioSamplePredictionResponse {
+  sample_index: number;
+  prediction: string;
+  confidence: number | null;
+  probabilities?: Record<string, number> | null;
+  features: Record<string, unknown>;
 }
 
 export interface StudioExplainRequest {

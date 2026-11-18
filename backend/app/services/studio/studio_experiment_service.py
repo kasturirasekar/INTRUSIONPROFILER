@@ -38,6 +38,7 @@ from ...schemas.studio import (
     StudioExperimentResult,
     StudioExperimentStatus,
     ConfusionMatrixDict,
+    StudioSamplePredictionResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -134,6 +135,19 @@ def _validate_imputed_features(values: np.ndarray, feature_names: list[str], *, 
             f"{context} preprocessing left non-finite values after imputation in: "
             + ", ".join(columns)
         )
+
+
+def _safe_predict_proba(model: Any, values: Any) -> np.ndarray | None:
+    """Return probabilities only when the estimator genuinely supports them."""
+    predict_proba = getattr(model, "predict_proba", None)
+    if not callable(predict_proba):
+        return None
+    try:
+        return np.asarray(predict_proba(values), dtype=np.float64)
+    except (AttributeError, NotImplementedError):
+        # VotingClassifier exposes predict_proba even for hard voting, where
+        # sklearn intentionally raises AttributeError.
+        return None
 
 class StudioExperimentService:
     def __init__(self) -> None:
@@ -299,6 +313,7 @@ class StudioExperimentService:
                     meta_classifier_hyperparameters=req.model_settings.meta_classifier_hyperparameters,
                     cv_folds=req.model_settings.cv_folds,
                     n_estimators=req.model_settings.n_estimators,
+                    max_depth=req.model_settings.max_depth,
                     learning_rate=req.model_settings.learning_rate,
                     base_estimator_id=req.model_settings.base_estimator_id,
                     base_classifiers=lab_base_configs,
@@ -311,6 +326,7 @@ class StudioExperimentService:
                 t_train_start = time.time()
                 clf.fit(X_train_scaled, y_train)
                 train_time = time.time() - t_train_start
+                train_accuracy = float(accuracy_score(y_train, clf.predict(X_train_scaled)))
 
                 # Predict & Evaluate
                 self._update_status(exp_id, "running", "Evaluating model on held-out test traffic", 90)
@@ -318,7 +334,7 @@ class StudioExperimentService:
                 y_pred = clf.predict(X_test_scaled)
                 pred_time = time.time() - t_pred_start
 
-                y_proba = clf.predict_proba(X_test_scaled) if hasattr(clf, "predict_proba") else None
+                y_proba = _safe_predict_proba(clf, X_test_scaled)
 
                 # Determine task type
                 num_classes = y_raw.nunique()
@@ -404,17 +420,17 @@ class StudioExperimentService:
                         for feature_idx, col in enumerate(feature_names[:10])
                     }
                     p_class = str(y_pred[i])
-                    conf = float(np.max(y_proba[i])) if y_proba is not None else 1.0
+                    conf = float(np.max(y_proba[i])) if y_proba is not None else None
                     pred_rows.append({
                         "index": i,
                         "ground_truth": str(y_test.iloc[i]),
                         "prediction": p_class,
-                        "confidence": round(conf, 4),
+                        "confidence": round(conf, 8) if conf is not None else None,
                         "features": row_data,
                     })
 
                 pred_counts = pd.Series(y_pred).value_counts().to_dict()
-                mean_conf = float(np.mean([p["confidence"] for p in pred_rows])) if pred_rows else 1.0
+                mean_conf = float(np.mean(np.max(y_proba, axis=1))) if y_proba is not None and len(y_proba) else None
 
                 # Save pipeline for explanations
                 pipeline_obj = {
@@ -423,6 +439,8 @@ class StudioExperimentService:
                     "scaler": scaler,
                     "model": clf,
                     "feature_names": feature_names,
+                    "numeric_columns": numeric_columns,
+                    "categorical_columns": categorical_columns,
                     "is_labeled": True,
                     "task_type": task_type,
                     "classes": labels,
@@ -442,6 +460,8 @@ class StudioExperimentService:
                     training_time_seconds=round(train_time, 3),
                     prediction_time_seconds=round(pred_time, 3),
                     accuracy=round(acc, 4),
+                    training_accuracy=round(train_accuracy, 4),
+                    generalization_gap=round(train_accuracy - acc, 4),
                     precision=round(prec, 4),
                     recall=round(rec, 4),
                     f1_score=round(f1, 4),
@@ -481,7 +501,7 @@ class StudioExperimentService:
                     raise ValueError("The production model is not loaded; Studio inference cannot run.")
                 prepared, raw_input = prediction_service.prepare_dataframe(X_input)
                 y_pred = m.predict(prepared)
-                y_proba = m.predict_proba(prepared) if hasattr(m, "predict_proba") else None
+                y_proba = _safe_predict_proba(m, prepared)
 
                 pred_time = time.time() - t_pred_start
                 pred_counts = pd.Series(y_pred).value_counts().to_dict()
@@ -489,12 +509,12 @@ class StudioExperimentService:
                 pred_rows = []
                 for i in range(min(50, len(X_input))):
                     p_class = str(y_pred[i])
-                    conf = float(np.max(y_proba[i])) if y_proba is not None else 1.0
+                    conf = float(np.max(y_proba[i])) if y_proba is not None else None
                     pred_rows.append({
                         "index": i,
                         "ground_truth": "Unlabeled",
                         "prediction": p_class,
-                        "confidence": round(conf, 4),
+                        "confidence": round(conf, 8) if conf is not None else None,
                         "features": {
                             col: float(raw_input.iloc[i][col])
                             for col in numeric_cols[:10]
@@ -502,7 +522,7 @@ class StudioExperimentService:
                         },
                     })
 
-                mean_conf = float(np.mean([p["confidence"] for p in pred_rows])) if pred_rows else 1.0
+                mean_conf = float(np.mean(np.max(y_proba, axis=1))) if y_proba is not None and len(y_proba) else None
 
                 pipeline_obj = {
                     "imputer": None,
@@ -588,5 +608,62 @@ class StudioExperimentService:
         if exp_id in self.results:
             return self.results[exp_id]
         raise HTTPException(status_code=404, detail=f"Results for experiment {exp_id} not ready yet.")
+
+    def predict_heldout_sample(self, exp_id: str, sample_index: int) -> StudioSamplePredictionResponse:
+        """Predict one raw held-out row with the fitted experiment pipeline."""
+        if exp_id not in self.results or exp_id not in self.models:
+            raise HTTPException(status_code=404, detail=f"Trained model for experiment {exp_id} not found.")
+        result = self.results[exp_id]
+        if not result.is_labeled:
+            raise HTTPException(status_code=400, detail="Sample prediction is available after a labeled training run.")
+        samples = self.test_datasets.get(exp_id)
+        if samples is None or sample_index >= len(samples):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Sample index {sample_index} is unavailable for experiment {exp_id}.",
+            )
+
+        pipeline_obj = self.models[exp_id]
+        preprocessor = pipeline_obj["preprocessor"]
+        scaler = pipeline_obj["scaler"]
+        model = pipeline_obj["model"]
+        record = samples.iloc[[sample_index]].copy()
+        numeric_columns = pipeline_obj.get("numeric_columns", [])
+        if numeric_columns:
+            record[numeric_columns] = _clean_numeric_features(
+                record[numeric_columns], context=f"sample prediction {exp_id}:{sample_index}"
+            )
+        transformed = preprocessor.transform(record)
+        feature_names = list(pipeline_obj["feature_names"])
+        _validate_imputed_features(transformed, feature_names, context="Sample prediction")
+        scaled = scaler.transform(transformed)
+        _validate_imputed_features(scaled, feature_names, context="Scaled sample prediction")
+
+        predicted = model.predict(scaled)[0]
+        probabilities = None
+        confidence = None
+        if (scores_matrix := _safe_predict_proba(model, scaled)) is not None:
+            scores = scores_matrix[0]
+            probabilities = {str(label): float(score) for label, score in zip(model.classes_, scores)}
+            confidence = float(np.max(scores))
+
+        feature_values: dict[str, Any] = {}
+        for name, value in record.iloc[0].items():
+            if pd.isna(value):
+                feature_values[name] = None
+            elif isinstance(value, (np.integer, int)):
+                feature_values[name] = int(value)
+            elif isinstance(value, (np.floating, float)):
+                feature_values[name] = float(value)
+            else:
+                feature_values[name] = str(value)
+
+        return StudioSamplePredictionResponse(
+            sample_index=sample_index,
+            prediction=str(predicted),
+            confidence=confidence,
+            probabilities=probabilities,
+            features=feature_values,
+        )
 
 studio_experiment_service = StudioExperimentService()

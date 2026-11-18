@@ -24,17 +24,13 @@ class ModelService:
         self.is_loaded: bool = False
         self._benchmarks_cache: list[dict[str, Any]] | None = None
         self._model_loader: threading.Thread | None = None
+        self._load_model()
+        self._load_feature_importances()
 
     def start_loading(self) -> None:
         """Start model deserialization after the API has bound its HTTP socket."""
-        if self._model_loader is not None and self._model_loader.is_alive():
-            return
-        self._model_loader = threading.Thread(
-            target=self._initialize_model,
-            name="model-loader",
-            daemon=True,
-        )
-        self._model_loader.start()
+        if not self.is_loaded:
+            self._initialize_model()
 
     def _initialize_model(self) -> None:
         self._load_model()
@@ -125,10 +121,17 @@ class ModelService:
                     self.model_name = "Stacking Ensemble Classifier (Multi-Model Learning)"
                 elif "Voting" in est_type:
                     self.model_name = "Voting Ensemble Classifier (Soft Consensus)"
+                elif "LogisticRegression" in est_type:
+                    self.model_name = "Logistic Regression Classifier"
                 else:
                     self.model_name = f"Ensemble Classifier ({est_type})"
             else:
-                self.model_name = "Stacking Ensemble Classifier (Multi-Model Learning)"
+                est_type = type(self.model).__name__
+                self.model_name = (
+                    "Logistic Regression Classifier"
+                    if "LogisticRegression" in est_type
+                    else f"{est_type} Classifier"
+                )
             
             # Extract features from pipeline
             if hasattr(self.model, "feature_names_in_"):
@@ -205,6 +208,8 @@ class ModelService:
                     benchmarks.append({
                         "model": str(row["model"]),
                         "accuracy": float(row["accuracy"]),
+                        "training_accuracy": float(row["training_accuracy"]) if "training_accuracy" in row and pd.notna(row["training_accuracy"]) else None,
+                        "generalization_gap": float(row["generalization_gap"]) if "generalization_gap" in row and pd.notna(row["generalization_gap"]) else None,
                         "precision_attack": float(row["precision_attack"]),
                         "recall_attack": float(row["recall_attack"]),
                         "f1_attack": float(row["f1_attack"]),
@@ -228,6 +233,8 @@ class ModelService:
                     benchmarks.append({
                         "model": str(row["model"]),
                         "accuracy": float(row["accuracy"]),
+                        "training_accuracy": float(row["training_accuracy"]) if "training_accuracy" in row and pd.notna(row["training_accuracy"]) else None,
+                        "generalization_gap": float(row["generalization_gap"]) if "generalization_gap" in row and pd.notna(row["generalization_gap"]) else None,
                         "precision_attack": float(row["precision_attack"]),
                         "recall_attack": float(row["recall_attack"]),
                         "f1_attack": float(row["f1_attack"]),

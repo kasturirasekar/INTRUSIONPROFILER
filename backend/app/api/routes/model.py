@@ -19,15 +19,20 @@ def get_model_performance() -> ModelPerformanceResponse:
     feature_details = [FeatureImportanceDetail(**f) for f in model_service.feature_importances]
     metadata = model_service.get_metadata()
 
-    # Active model confusion matrix (Stacking Ensemble)
-    stacking_benchmark = next((b for b in benchmarks if "stacking" in b["model"].lower()), None)
+    active_name = model_service.model_name.lower()
+    active_benchmark = next(
+        (b for b in benchmarks if b["model"].lower() in active_name or active_name in b["model"].lower()),
+        next((b for b in benchmarks if b.get("is_ensemble")), None),
+    )
+    matrix = active_benchmark.get("confusion_matrix") if active_benchmark else None
+    matrix = matrix or [[0, 0], [0, 0]]
     cm_dict = {
         "labels": ["Benign", "Attack"],
-        "matrix": stacking_benchmark["confusion_matrix"] if stacking_benchmark else [[38971, 25], [46, 8565]],
-        "true_negatives": 38971,
-        "false_positives": 25,
-        "false_negatives": 46,
-        "true_positives": 8565,
+        "matrix": matrix,
+        "true_negatives": int(matrix[0][0]),
+        "false_positives": int(matrix[0][1]),
+        "false_negatives": int(matrix[1][0]),
+        "true_positives": int(matrix[1][1]),
     }
 
     return ModelPerformanceResponse(

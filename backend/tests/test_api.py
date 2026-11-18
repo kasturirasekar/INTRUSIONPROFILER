@@ -1,6 +1,7 @@
 import unittest
 from backend.app.api.routes import health, dashboard, traffic, threats, analytics, model, predictions, reports, lab, explainability, studio
-from backend.app.schemas.prediction import SinglePredictionRequest
+from backend.app.schemas.prediction import SinglePredictionRequest, InteractivePredictionRequest
+from fastapi import HTTPException
 from backend.app.schemas.lab import DatasetSelectionConfig, PreprocessingConfig, EnsembleConfig, BaseClassifierConfig, ExperimentRequest, PreprocessingPreviewRequest
 from backend.app.schemas.explainability import FlowExplainRequest, LimeExplainRequest, CounterfactualRequest, EnsembleExplainRequest
 
@@ -18,6 +19,8 @@ class TestBackendEndpoints(unittest.TestCase):
         self.assertGreater(len(res.traffic_timeline), 0)
         self.assertGreater(len(res.attack_distribution), 0)
         self.assertGreater(len(res.top_features), 0)
+        self.assertGreater(res.model_accuracy, 90.0)
+        self.assertGreater(res.model_f1, 90.0)
 
     def test_traffic_endpoint(self):
         res = traffic.get_traffic(page=1, page_size=10)
@@ -55,6 +58,66 @@ class TestBackendEndpoints(unittest.TestCase):
         self.assertEqual(res.total_processed, 1)
         self.assertEqual(len(res.results), 1)
         self.assertIn(res.results[0].prediction, ["Benign", "Attack"])
+
+    def test_prediction_schema_endpoint(self):
+        schema = predictions.get_prediction_schema()
+        self.assertEqual(schema.feature_count, 78)
+        self.assertEqual(len(schema.groups), 5)
+        self.assertIn("Attack", schema.classes)
+        self.assertIn("Benign", schema.classes)
+        self.assertEqual(len(schema.sample_benign), 78)
+        self.assertEqual(len(schema.sample_attack), 78)
+
+    def test_interactive_prediction_known_benign(self):
+        schema = predictions.get_prediction_schema()
+        res = predictions.predict_interactive(InteractivePredictionRequest(record=schema.sample_benign))
+        self.assertEqual(res.predicted_label, "Benign")
+        self.assertEqual(res.verdict_title, "< BENIGN TRAFFIC DETECTED >")
+        self.assertEqual(res.status, "Normal Network Activity")
+        self.assertFalse(res.is_attack)
+        self.assertIsNotNone(res.benign_probability)
+        self.assertGreater(res.benign_probability, 0.9)
+
+    def test_interactive_prediction_known_attack(self):
+        schema = predictions.get_prediction_schema()
+        res = predictions.predict_interactive(InteractivePredictionRequest(record=schema.sample_attack))
+        self.assertEqual(res.predicted_label, "Attack")
+        self.assertEqual(res.verdict_title, "< CYBER ATTACK DETECTED >")
+        self.assertEqual(res.status, "Malicious Network Activity")
+        self.assertTrue(res.is_attack)
+        self.assertIsNotNone(res.attack_probability)
+        self.assertGreater(res.attack_probability, 0.9)
+
+    def test_interactive_prediction_incomplete_error(self):
+        with self.assertRaises(HTTPException) as ctx:
+            predictions.predict_interactive(InteractivePredictionRequest(record={"Destination Port": 80}))
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("Incomplete input record", ctx.exception.detail)
+
+    def test_interactive_prediction_invalid_numeric_error(self):
+        schema = predictions.get_prediction_schema()
+        bad_rec = dict(schema.sample_benign)
+        bad_rec["Flow Duration"] = "non_numeric_string"
+        with self.assertRaises(HTTPException) as ctx:
+            predictions.predict_interactive(InteractivePredictionRequest(record=bad_rec))
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("Invalid numerical value", ctx.exception.detail)
+
+    def test_interactive_prediction_missing_null_error(self):
+        schema = predictions.get_prediction_schema()
+        null_rec = dict(schema.sample_benign)
+        null_rec["Destination Port"] = None
+        with self.assertRaises(HTTPException) as ctx:
+            predictions.predict_interactive(InteractivePredictionRequest(record=null_rec))
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("contains a missing, null, or blank value", ctx.exception.detail)
+
+    def test_interactive_prediction_unrecognized_features_error(self):
+        wrong_rec = {"unknown_col_a": 12, "unknown_col_b": 99}
+        with self.assertRaises(HTTPException) as ctx:
+            predictions.predict_interactive(InteractivePredictionRequest(record=wrong_rec))
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("Invalid feature schema", ctx.exception.detail)
 
     def test_reports_summary(self):
         res = reports.get_executive_summary()

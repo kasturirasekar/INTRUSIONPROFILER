@@ -7,10 +7,27 @@ import pandas as pd
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
-from ...schemas.prediction import BatchPredictionRequest, PredictionResponse, SinglePredictionRequest
+from ...schemas.prediction import (
+    BatchPredictionRequest,
+    PredictionResponse,
+    SinglePredictionRequest,
+    InteractivePredictionRequest,
+    InteractivePredictionResponse,
+    PredictionSchemaResponse,
+)
 from ...services.prediction_service import prediction_service
 
 router = APIRouter(prefix="/predict", tags=["Predictions"])
+
+@router.get("/schema", response_model=PredictionSchemaResponse)
+def get_prediction_schema() -> PredictionSchemaResponse:
+    """Returns the exact 78-feature schema, categories, tooltips, and sample flows."""
+    return prediction_service.get_feature_schema()
+
+@router.post("/interactive", response_model=InteractivePredictionResponse)
+def predict_interactive(request: InteractivePredictionRequest) -> InteractivePredictionResponse:
+    """Predicts a single network flow with strict feature validation against the trained ensemble."""
+    return prediction_service.predict_single_interactive(request.record)
 
 @router.post("", response_model=PredictionResponse)
 def predict_single(request: SinglePredictionRequest) -> PredictionResponse:

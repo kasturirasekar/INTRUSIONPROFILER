@@ -11,6 +11,8 @@ from ...schemas.studio import (
     StudioExperimentResult,
     StudioExplainRequest,
     StudioFullExplanationResponse,
+    StudioSamplePredictionRequest,
+    StudioSamplePredictionResponse,
 )
 from ...services.studio.dataset_manager import dataset_manager
 from ...services.studio.studio_experiment_service import studio_experiment_service
@@ -50,6 +52,15 @@ def get_experiment_status(experiment_id: str) -> StudioExperimentStatus:
 @router.get("/experiments/{experiment_id}/results", response_model=StudioExperimentResult)
 def get_experiment_results(experiment_id: str) -> StudioExperimentResult:
     return studio_experiment_service.get_results(experiment_id)
+
+@router.post(
+    "/experiments/{experiment_id}/predict-sample",
+    response_model=StudioSamplePredictionResponse,
+)
+def predict_heldout_sample(
+    experiment_id: str, req: StudioSamplePredictionRequest
+) -> StudioSamplePredictionResponse:
+    return studio_experiment_service.predict_heldout_sample(experiment_id, req.sample_index)
 
 @router.post("/explain", response_model=StudioFullExplanationResponse)
 def explain_record(req: StudioExplainRequest) -> StudioFullExplanationResponse:

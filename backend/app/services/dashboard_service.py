@@ -113,14 +113,15 @@ class DashboardService:
                     )
                 )
 
-        # Test accuracy & F1 score from validated benchmark
-        accuracy = 0.9983
-        f1_score = 0.9953
-        if hasattr(model_service, "_benchmarks_cache") and model_service._benchmarks_cache:
-            rf_bm = next((b for b in model_service._benchmarks_cache if b.get("model") == "Random Forest"), None)
-            if rf_bm:
-                accuracy = rf_bm.get("accuracy", accuracy)
-                f1_score = rf_bm.get("f1_attack", f1_score)
+        # Metrics follow the currently loaded production classifier.
+        active_name = model_service.model_name.lower()
+        active_benchmarks = model_service.get_benchmarks()
+        active_benchmark = next(
+            (b for b in active_benchmarks if b.get("model", "").lower() in active_name or active_name in b.get("model", "").lower()),
+            next((b for b in active_benchmarks if b.get("is_ensemble")), active_benchmarks[0] if active_benchmarks else None),
+        )
+        accuracy = active_benchmark.get("accuracy", 0.0) if active_benchmark else 0.0
+        f1_score = active_benchmark.get("f1_attack", 0.0) if active_benchmark else 0.0
 
         now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 

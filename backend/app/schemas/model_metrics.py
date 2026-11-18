@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 class ModelBenchmarkRow(BaseModel):
     model: str
     accuracy: float
+    training_accuracy: float | None = None
+    generalization_gap: float | None = None
     precision_attack: float
     recall_attack: float
     f1_attack: float

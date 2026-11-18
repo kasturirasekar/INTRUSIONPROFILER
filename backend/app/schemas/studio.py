@@ -97,6 +97,8 @@ class StudioExperimentResult(BaseModel):
     prediction_time_seconds: float
     # Labeled metrics (None for unlabeled data)
     accuracy: float | None = None
+    training_accuracy: float | None = None
+    generalization_gap: float | None = None
     precision: float | None = None
     recall: float | None = None
     f1_score: float | None = None
@@ -111,10 +113,20 @@ class StudioExperimentResult(BaseModel):
     # Unlabeled / General statistics
     total_evaluated_records: int
     predicted_class_counts: dict[str, int]
-    mean_confidence: float
+    mean_confidence: float | None = None
     # Predictions preview
     predictions_preview: list[dict[str, Any]]
     created_at: str
+
+class StudioSamplePredictionRequest(BaseModel):
+    sample_index: int = Field(ge=0)
+
+class StudioSamplePredictionResponse(BaseModel):
+    sample_index: int
+    prediction: str
+    confidence: float | None = None
+    probabilities: dict[str, float] | None = None
+    features: dict[str, Any]
 
 # ----------------- Explanation Schemas -----------------
 

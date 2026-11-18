@@ -18,6 +18,7 @@ export type NavTab =
   | 'threats'
   | 'analytics'
   | 'model'
+  | 'xai'
   | 'studio'
   | 'research'
   | 'reports'
@@ -65,6 +66,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Model Performance',
       icon: Cpu,
       desc: 'Ensemble Benchmarks & ROC',
+    },
+    {
+      id: 'xai' as NavTab,
+      label: 'Predict & Explain (XAI)',
+      icon: Sparkles,
+      desc: 'Model Predict & Explainability',
+      isNew: true,
     },
     {
       id: 'studio' as NavTab,
@@ -152,11 +160,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="flex items-center justify-between text-[11px] font-mono text-soc-muted mt-1">
             <span>ENGINE</span>
-            <span className="text-soc-accent font-bold">Stacking Ensemble</span>
+            <span className="text-soc-accent font-bold">Logistic Regression</span>
           </div>
           <div className="flex items-center justify-between text-[11px] font-mono text-soc-muted mt-1">
-            <span>TEST F1</span>
-            <span className="text-soc-low font-bold">99.58%</span>
+            <span>TEST ACC.</span>
+            <span className="text-soc-low font-bold">94.99%</span>
           </div>
         </div>
       </div>

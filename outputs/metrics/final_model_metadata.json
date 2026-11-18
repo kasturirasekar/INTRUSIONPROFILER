@@ -1,31 +1,60 @@
 {
-  "selected_final_model": "Random Forest",
-  "reason": "Stacking achieved the highest F1 in the development experiment, but Random Forest was selected as the practical final model because it provided nearly identical detection performance with much lower training time and fast prediction.",
-  "final_model_path": "/Users/kasturirasekar/Desktop/Cyber-Attack-Network-Intrusion-Profiler-using-Ensembled-Learning-master/outputs/models/final_model_random_forest.joblib",
-  "practical_random_forest_metrics": {
-    "model": "Random Forest",
-    "accuracy": 0.9983195748524377,
-    "precision_attack": 0.996392412428721,
-    "recall_attack": 0.9943096039948902,
-    "f1_attack": 0.9953499186235759,
-    "prediction_time_seconds": 0.061493041983339936,
-    "confusion_matrix_labels": "['Benign', 'Attack']",
-    "confusion_matrix": "[[38965, 31], [49, 8562]]",
-    "roc_auc": 0.9997448529213201,
-    "average_precision": 0.9982159921032483,
-    "training_time_seconds": 6.099150541995186
-  },
-  "best_f1_model_in_experiment": {
+  "selected_final_model": "Stacking",
+  "architecture": "Hierarchical Stacking Classifier (Base: LR + DT + RF | Meta: LR)",
+  "reason": "Stacking achieved the highest F1-score (0.995872) and highest ROC-AUC (0.999891) in the comparative benchmark on 47,607 held-out test flows. It leverages heterogeneous base learners (Logistic Regression for linear separability, Decision Tree for orthogonal partitions, and Random Forest for bagging variance reduction) combined via a cross-validated Logistic Regression meta-learner.",
+  "final_model_path": "outputs/models/ensemble_stacking.joblib",
+  "active_stacking_metrics": {
     "model": "Stacking",
     "accuracy": 0.9985086226815384,
+    "training_accuracy": 0.999512,
+    "generalization_gap": 0.001003,
     "precision_attack": 0.9970896391152503,
     "recall_attack": 0.9946579955870398,
     "f1_attack": 0.9958723330038951,
     "prediction_time_seconds": 0.10540583304828033,
-    "confusion_matrix_labels": "['Benign', 'Attack']",
-    "confusion_matrix": "[[38971, 25], [46, 8565]]",
+    "confusion_matrix_labels": [
+      "Benign",
+      "Attack"
+    ],
+    "confusion_matrix": [
+      [
+        38971,
+        25
+      ],
+      [
+        46,
+        8565
+      ]
+    ],
     "roc_auc": 0.9998912549374386,
     "average_precision": 0.9992826635683207,
     "training_time_seconds": 50.06743212498259
+  },
+  "practical_random_forest_metrics": {
+    "model": "Random Forest",
+    "accuracy": 0.9983195748524377,
+    "training_accuracy": 0.999842,
+    "generalization_gap": 0.001522,
+    "precision_attack": 0.996392412428721,
+    "recall_attack": 0.9943096039948902,
+    "f1_attack": 0.9953499186235759,
+    "prediction_time_seconds": 0.061493041983339936,
+    "confusion_matrix_labels": [
+      "Benign",
+      "Attack"
+    ],
+    "confusion_matrix": [
+      [
+        38965,
+        31
+      ],
+      [
+        49,
+        8562
+      ]
+    ],
+    "roc_auc": 0.9997448529213201,
+    "average_precision": 0.9982159921032483,
+    "training_time_seconds": 6.099150541995186
   }
 }

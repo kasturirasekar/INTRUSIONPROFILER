@@ -35,7 +35,7 @@ class Settings(BaseModel):
 
     # Models
     MODEL_PATH: Path = MODELS_DIR / "ensemble_stacking.joblib"
-    FALLBACK_MODEL_PATH: Path = MODELS_DIR / "ensemble_soft_voting.joblib"
+    FALLBACK_MODEL_PATH: Path = MODELS_DIR / "final_model_random_forest.joblib"
     
     # Severity Thresholds (attack probability)
     SEVERITY_CRITICAL: float = 0.90

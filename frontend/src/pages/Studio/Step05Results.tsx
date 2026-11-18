@@ -1,651 +1,670 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Download,
-  FileText,
-  RotateCcw,
+  Shield,
   ShieldCheck,
   ShieldAlert,
-  ArrowRight,
-  Clock,
-  Zap,
-  Layers,
-  ChevronLeft,
-  ChevronRight,
-  Info,
+  Play,
+  RotateCcw,
   CheckCircle2,
-  GitCompare,
-  BarChart2,
-  Table,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Copy,
+  Code,
+  Sliders,
+  Info,
+  Sparkles,
+  Cpu,
 } from 'lucide-react';
 import { api } from '../../services/api';
+import {
+  PredictionSchemaResponse,
+  InteractivePredictionResponse,
+  FeatureGroupMeta,
+} from '../../types';
 import { StudioExperimentResult } from '../../types/studio';
 
 interface Step05ResultsProps {
-  experimentResult: StudioExperimentResult | null;
-  onSelectFlowForExplain: (recordIndex: number) => void;
-  onRerun: () => void;
+  experimentResult?: StudioExperimentResult | null;
+  onSelectFlowForExplain?: (recordIndex: number) => void;
+  onRerun?: () => void;
 }
 
-export const Step05Results: React.FC<Step05ResultsProps> = ({
-  experimentResult,
-  onSelectFlowForExplain,
-  onRerun,
-}) => {
-  const [viewTab, setViewTab] = useState<'telemetry' | 'compare'>('telemetry');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [allRuns, setAllRuns] = useState<any[]>([]);
-  const [loadingRuns, setLoadingRuns] = useState<boolean>(false);
-  const rowsPerPage = 10;
+export const Step05Results: React.FC<Step05ResultsProps> = () => {
+  const [schema, setSchema] = useState<PredictionSchemaResponse | null>(null);
+  const [loadingSchema, setLoadingSchema] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'form' | 'json'>('form');
 
+  // Input states
+  const [featureValues, setFeatureValues] = useState<Record<string, string>>({});
+  const [jsonInput, setJsonInput] = useState<string>('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // Search filter for manual form
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  // Inference states
+  const [isPredicting, setIsPredicting] = useState<boolean>(false);
+  const [predictionResult, setPredictionResult] = useState<InteractivePredictionResponse | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [activePreset, setActivePreset] = useState<'benign' | 'attack' | 'custom'>('benign');
+
+  // Load schema from backend on mount
   useEffect(() => {
-    const fetchRuns = async () => {
-      setLoadingRuns(true);
+    let isMounted = true;
+    const fetchSchema = async () => {
       try {
-        const data = await api.listStudioExperiments();
-        setAllRuns(data || []);
-      } catch (err) {
-        console.error('Failed to load past experiments', err);
+        setLoadingSchema(true);
+        const data = await api.getPredictionSchema();
+        if (!isMounted) return;
+        setSchema(data);
+
+        // Pre-populate with benign sample by default
+        if (data.sample_benign && Object.keys(data.sample_benign).length > 0) {
+          const strMap: Record<string, string> = {};
+          data.feature_names.forEach((fn) => {
+            strMap[fn] = String(data.sample_benign[fn] ?? 0);
+          });
+          setFeatureValues(strMap);
+          setJsonInput(JSON.stringify(data.sample_benign, null, 2));
+        }
+      } catch (err: any) {
+        console.error('Failed to load prediction schema:', err);
+        setValidationError(err?.response?.data?.detail || 'Failed to connect to ML model schema service.');
       } finally {
-        setLoadingRuns(false);
+        if (isMounted) setLoadingSchema(false);
       }
     };
-    fetchRuns();
-  }, [experimentResult?.experiment_id]);
 
-  if (!experimentResult) {
+    fetchSchema();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Synchronize manual form changes to JSON editor
+  const handleFeatureChange = (name: string, value: string) => {
+    const updated = { ...featureValues, [name]: value };
+    setFeatureValues(updated);
+    setActivePreset('custom');
+
+    // Also update JSON text
+    try {
+      const numMap: Record<string, any> = {};
+      Object.entries(updated).forEach(([k, v]) => {
+        numMap[k] = v === '' ? null : Number(v) || v;
+      });
+      setJsonInput(JSON.stringify(numMap, null, 2));
+      setJsonError(null);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Synchronize JSON editor changes to manual form
+  const handleJsonChange = (rawJson: string) => {
+    setJsonInput(rawJson);
+    setActivePreset('custom');
+
+    try {
+      const parsed = JSON.parse(rawJson);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        setJsonError('JSON must be a valid key-value object of network features.');
+        return;
+      }
+      setJsonError(null);
+
+      // Update form values
+      const strMap: Record<string, string> = {};
+      Object.entries(parsed).forEach(([k, v]) => {
+        strMap[k] = v === null || v === undefined ? '' : String(v);
+      });
+      setFeatureValues(strMap);
+    } catch (e: any) {
+      setJsonError(`JSON Syntax Error: ${e.message}`);
+    }
+  };
+
+  // Load known Benign sample
+  const handleLoadBenign = () => {
+    if (!schema?.sample_benign) return;
+    const strMap: Record<string, string> = {};
+    schema.feature_names.forEach((fn) => {
+      strMap[fn] = String(schema.sample_benign[fn] ?? 0);
+    });
+    setFeatureValues(strMap);
+    setJsonInput(JSON.stringify(schema.sample_benign, null, 2));
+    setJsonError(null);
+    setValidationError(null);
+    setActivePreset('benign');
+  };
+
+  // Load known Cyber Attack sample
+  const handleLoadAttack = () => {
+    if (!schema?.sample_attack) return;
+    const strMap: Record<string, string> = {};
+    schema.feature_names.forEach((fn) => {
+      strMap[fn] = String(schema.sample_attack[fn] ?? 0);
+    });
+    setFeatureValues(strMap);
+    setJsonInput(JSON.stringify(schema.sample_attack, null, 2));
+    setJsonError(null);
+    setValidationError(null);
+    setActivePreset('attack');
+  };
+
+  // Reset all fields
+  const handleReset = () => {
+    if (!schema) return;
+    const emptyMap: Record<string, string> = {};
+    schema.feature_names.forEach((fn) => {
+      emptyMap[fn] = '';
+    });
+    setFeatureValues(emptyMap);
+    setJsonInput('{}');
+    setJsonError(null);
+    setValidationError(null);
+    setPredictionResult(null);
+    setActivePreset('custom');
+  };
+
+  const toggleGroupCollapse = (catId: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [catId]: !prev[catId] }));
+  };
+
+  // Check missing features
+  const missingFeatures = useMemo(() => {
+    if (!schema?.feature_names) return [];
+    return schema.feature_names.filter((fn) => {
+      const val = featureValues[fn];
+      return val === undefined || val === null || val.trim() === '';
+    });
+  }, [schema, featureValues]);
+
+  // Execute inference with strict validation
+  const handlePredict = async () => {
+    setValidationError(null);
+
+    if (!schema) {
+      setValidationError('Prediction schema is not loaded yet.');
+      return;
+    }
+
+    // Check for missing features on client side first
+    if (missingFeatures.length > 0) {
+      setValidationError(
+        `Incomplete input: Missing ${missingFeatures.length} of ${schema.feature_count} required feature(s). The trained ensemble requires all 78 network flow features for prediction.`
+      );
+      return;
+    }
+
+    // Convert values to numeric map
+    const numericRecord: Record<string, number> = {};
+    for (const fn of schema.feature_names) {
+      const rawVal = featureValues[fn];
+      const parsedNum = Number(rawVal);
+      if (isNaN(parsedNum) || !isFinite(parsedNum)) {
+        setValidationError(`Invalid numeric value for feature "${fn}": "${rawVal}" is not a valid number.`);
+        return;
+      }
+      numericRecord[fn] = parsedNum;
+    }
+
+    setIsPredicting(true);
+    try {
+      const response = await api.predictInteractive(numericRecord);
+      setPredictionResult(response);
+      // Smooth scroll to top of prediction result
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      console.error('Prediction request failed:', err);
+      const detail = err?.response?.data?.detail;
+      setValidationError(detail || 'Inference failed. Check that all network flow inputs are valid.');
+    } finally {
+      setIsPredicting(false);
+    }
+  };
+
+  if (loadingSchema) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center max-w-xl mx-auto my-8 font-mono">
-        <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-        <h3 className="text-sm font-bold text-white mb-1">No Active Experiment Results</h3>
-        <p className="text-slate-400 text-xs mb-4">
-          Execute a model run in Step 03 (Train & Predict) to evaluate performance and view predictions.
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center max-w-xl mx-auto my-8 font-mono">
+        <Cpu className="w-10 h-10 text-cyan-400 mx-auto mb-3 animate-pulse" />
+        <h3 className="text-sm font-bold text-white mb-1">Connecting to Inference Engine</h3>
+        <p className="text-slate-400 text-xs">
+          Loading 78-feature schema and trained ensemble model pipeline...
         </p>
       </div>
     );
   }
 
-  const isLabeled = experimentResult.is_labeled;
-  const cm = experimentResult.confusion_matrix;
-  const previewRows = experimentResult.predictions_preview || [];
-  const totalPages = Math.ceil(previewRows.length / rowsPerPage) || 1;
-  const paginatedRows = previewRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-
-  const downloadJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(experimentResult, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `experiment_${experimentResult.experiment_id}_dossier.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  const downloadCSV = () => {
-    if (!previewRows || previewRows.length === 0) return;
-    const headers = ['index', 'ground_truth', 'prediction', 'confidence'];
-    const csvContent = [
-      headers.join(','),
-      ...previewRows.map((r) => `${r.index},"${r.ground_truth}","${r.prediction}",${r.confidence.toFixed(4)}`),
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `experiment_${experimentResult.experiment_id}_predictions.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  };
-
   return (
-    <div className="space-y-5 text-slate-200">
-      {/* Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                Step 05 — Performance & Telemetry
+    <div className="space-y-6 max-w-7xl mx-auto font-mono text-xs">
+      {/* Page Header */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Shield className="w-3.5 h-3.5" />
+                Step 05 – Cyber Attack Prediction Interface
               </span>
-              <span className="text-slate-500 text-xs font-mono">
-                {isLabeled ? 'Supervised Holdout Evaluation' : 'Unlabeled Inference Profiling'}
+              <span className="text-[11px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                Active Model: Stacking Ensemble (LR + DT + RF)
               </span>
             </div>
-            <h2 className="text-lg font-mono font-bold text-white tracking-tight">
-              {experimentResult.name}
+            <h2 className="text-lg font-bold text-white tracking-tight">
+              Network Flow Intrusion Predictor
             </h2>
-            <p className="text-slate-400 text-xs font-mono mt-0.5">
-              Strategy: <strong className="text-slate-200 uppercase">{experimentResult.strategy}</strong> • Model:{' '}
-              <strong className="text-slate-200">{experimentResult.model_name}</strong>
+            <p className="text-slate-400 text-xs">
+              Enter network traffic characteristics to identify whether the flow is benign or malicious using the trained ensemble learning model.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick Action Sample Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={downloadCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-lg border border-slate-700 transition-colors"
+              onClick={handleLoadBenign}
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                activePreset === 'benign'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+              }`}
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Predictions CSV</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              Load Benign Flow
             </button>
             <button
-              onClick={downloadJSON}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-lg border border-slate-700 transition-colors"
+              onClick={handleLoadAttack}
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                activePreset === 'attack'
+                  ? 'bg-red-500/20 text-red-300 border-red-500/40 shadow-sm'
+                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+              }`}
             >
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              <span>Audit JSON</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+              Load Cyber Attack Flow
             </button>
             <button
-              onClick={onRerun}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-semibold rounded-lg transition-colors"
+              onClick={handleReset}
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>New Run</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Diagnostics Strip & View Toggle */}
-        <div className="pt-3 flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-slate-400">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              Training: <strong className="text-slate-200">{experimentResult.training_time_seconds.toFixed(2)}s</strong>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-slate-500" />
-              Inference: <strong className="text-slate-200">{experimentResult.prediction_time_seconds.toFixed(3)}s</strong>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-slate-500" />
-              Evaluated: <strong className="text-slate-200">{experimentResult.total_evaluated_records.toLocaleString()} flows</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
-            <button
-              onClick={() => setViewTab('telemetry')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                viewTab === 'telemetry'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Table className="w-3 h-3" />
-              <span>Active Telemetry</span>
-            </button>
-            <button
-              onClick={() => setViewTab('compare')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                viewTab === 'compare'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <GitCompare className="w-3 h-3" />
-              <span>Compare Runs ({allRuns.length})</span>
+              Reset Form
             </button>
           </div>
         </div>
       </div>
 
-      {/* VIEW 1: Active Run Telemetry */}
-      {viewTab === 'telemetry' && (
-        <div className="space-y-5">
-          {isLabeled ? (
-            <div className="space-y-5">
-              {/* Metrics Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
-                {[
-                  { label: 'Accuracy', value: experimentResult.accuracy, color: 'text-white' },
-                  { label: 'Precision', value: experimentResult.precision, color: 'text-cyan-400' },
-                  { label: 'Recall (TPR)', value: experimentResult.recall, color: 'text-cyan-400' },
-                  { label: 'F1 Score', value: experimentResult.f1_score, color: 'text-emerald-400' },
-                  {
-                    label: 'False Alarm (FPR)',
-                    value: experimentResult.false_positive_rate,
-                    color: 'text-amber-400',
-                  },
-                  {
-                    label: 'Missed Threats (FNR)',
-                    value: experimentResult.false_negative_rate,
-                    color: 'text-rose-400',
-                  },
-                ].map((metric, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-3.5 flex flex-col justify-between"
-                  >
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                      {metric.label}
-                    </span>
-                    <span className={`text-lg font-bold mt-1.5 ${metric.color}`}>
-                      {metric.value !== undefined && metric.value !== null
-                        ? `${(metric.value * 100).toFixed(2)}%`
-                        : 'N/A'}
-                    </span>
-                    <span className="text-[10px] text-slate-500 mt-1">
-                      Holdout 20% split
-                    </span>
-                  </div>
-                ))}
+      {/* Prominent Prediction Result Display */}
+      {predictionResult && (
+        <div
+          className={`border-2 rounded-xl p-6 shadow-xl transition-all ${
+            predictionResult.is_attack
+              ? 'bg-red-950/40 border-red-500/60 shadow-red-950/30 text-red-200'
+              : 'bg-emerald-950/40 border-emerald-500/60 shadow-emerald-950/30 text-emerald-200'
+          }`}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div
+                className={`p-3.5 rounded-xl border ${
+                  predictionResult.is_attack
+                    ? 'bg-red-900/40 border-red-500/50 text-red-400'
+                    : 'bg-emerald-900/40 border-emerald-500/50 text-emerald-400'
+                }`}
+              >
+                {predictionResult.is_attack ? (
+                  <ShieldAlert className="w-8 h-8" />
+                ) : (
+                  <ShieldCheck className="w-8 h-8" />
+                )}
               </div>
-
-              {/* Confusion Matrix and Distribution */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                {/* Confusion Matrix */}
-                <div className="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-5">
-                  <div className="mb-3">
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
-                      Empirical Confusion Matrix
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Evaluated on holdout test flows against verified ground truth.
-                    </p>
-                  </div>
-
-                  {cm ? (
-                    <div className="grid grid-cols-2 gap-2.5 mt-3 font-mono text-center">
-                      <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
-                        <span className="text-[10px] text-slate-500 uppercase block">True Benign (TN)</span>
-                        <span className="text-xl font-bold text-emerald-400 my-0.5 block">
-                          {cm.true_negatives.toLocaleString()}
-                        </span>
-                        <span className="text-[10px] text-slate-500">Normal correctly allowed</span>
-                      </div>
-
-                      <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
-                        <span className="text-[10px] text-slate-500 uppercase block">False Positive (FP)</span>
-                        <span className="text-xl font-bold text-amber-400 my-0.5 block">
-                          {cm.false_positives.toLocaleString()}
-                        </span>
-                        <span className="text-[10px] text-slate-500">False alarms generated</span>
-                      </div>
-
-                      <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
-                        <span className="text-[10px] text-slate-500 uppercase block">False Negative (FN)</span>
-                        <span className="text-xl font-bold text-rose-400 my-0.5 block">
-                          {cm.false_negatives.toLocaleString()}
-                        </span>
-                        <span className="text-[10px] text-slate-500">Intrusions missed</span>
-                      </div>
-
-                      <div className="bg-slate-950 border border-slate-800 rounded-lg p-3">
-                        <span className="text-[10px] text-slate-500 uppercase block">True Attack (TP)</span>
-                        <span className="text-xl font-bold text-cyan-400 my-0.5 block">
-                          {cm.true_positives.toLocaleString()}
-                        </span>
-                        <span className="text-[10px] text-slate-500">Malicious threats caught</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 font-mono italic py-4">Confusion matrix not generated.</p>
-                  )}
-                </div>
-
-                {/* Threat vs Benign Breakdown */}
-                <div className="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between font-mono">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                      Threat vs Benign Distribution
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5 mb-3">
-                      Breakdown of model verdicts across all evaluated records.
-                    </p>
-
-                    <div className="space-y-2.5">
-                      {Object.entries(experimentResult.predicted_class_counts || {}).map(([cls, count]) => {
-                        const isAtt = cls === 'Attack';
-                        const pct = ((count / (experimentResult.total_evaluated_records || 1)) * 100).toFixed(1);
-                        return (
-                          <div key={cls} className="bg-slate-950 border border-slate-800 p-2.5 rounded-lg">
-                            <div className="flex justify-between items-center text-xs mb-1">
-                              <span className="flex items-center gap-1.5 font-semibold text-slate-200">
-                                <span className={`w-2 h-2 rounded-full ${isAtt ? 'bg-rose-500' : 'bg-emerald-400'}`} />
-                                {cls}
-                              </span>
-                              <span className="text-slate-400">
-                                {count.toLocaleString()} flows ({pct}%)
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                              <div
-                                style={{ width: `${pct}%` }}
-                                className={`h-full ${isAtt ? 'bg-rose-500' : 'bg-emerald-400'}`}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-500 flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                    <span>Cross-validated scoring strictly prevents data leakage.</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Per-Class Detailed Performance Table (for Multiclass and Binary) */}
-              {experimentResult.per_class_metrics && experimentResult.per_class_metrics.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 font-mono">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                        Per-Class Precision, Recall & F1-Score Breakdown
-                      </h4>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Individual performance metrics for each attack category and benign traffic.
-                      </p>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700">
-                      {experimentResult.per_class_metrics.length} Categories
-                    </span>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border border-slate-800">
-                      <thead>
-                        <tr className="bg-slate-950 text-slate-400 border-b border-slate-800 text-[11px] uppercase">
-                          <th className="p-2.5">Category Name</th>
-                          <th className="p-2.5 text-right">Precision</th>
-                          <th className="p-2.5 text-right">Recall</th>
-                          <th className="p-2.5 text-right">F1-Score</th>
-                          <th className="p-2.5 text-right">Support (Samples)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/60">
-                        {experimentResult.per_class_metrics.map((pcm) => (
-                          <tr key={pcm.class_name} className="hover:bg-slate-800/20">
-                            <td className="p-2.5 font-bold text-white flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full ${pcm.class_name.toLowerCase().includes('benign') ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                              {pcm.class_name}
-                            </td>
-                            <td className="p-2.5 text-right text-slate-300">{(pcm.precision * 100).toFixed(1)}%</td>
-                            <td className="p-2.5 text-right text-slate-300">{(pcm.recall * 100).toFixed(1)}%</td>
-                            <td className="p-2.5 text-right font-bold text-cyan-400">{(pcm.f1_score * 100).toFixed(1)}%</td>
-                            <td className="p-2.5 text-right text-slate-400">{pcm.support.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Unlabeled Inference Display */
-            <div className="space-y-4 font-mono">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-start gap-3">
-                <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                    Unsupervised Inference Profiling
-                  </h4>
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                    Because this uploaded dataset has no verified ground-truth attack labels, supervised performance metrics
-                    (Accuracy, Precision, Recall, F1) are strictly omitted to maintain scientific integrity. Flows were profiled
-                    using calibrated ensemble probability boundaries.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Profiled Flows</span>
-                  <span className="text-xl font-bold text-white">
-                    {experimentResult.total_evaluated_records.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Classified Malicious</span>
-                  <span className="text-xl font-bold text-rose-400">
-                    {(experimentResult.predicted_class_counts?.['Attack'] || 0).toLocaleString()} flows
-                  </span>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Classified Benign</span>
-                  <span className="text-xl font-bold text-emerald-400">
-                    {(experimentResult.predicted_class_counts?.['Benign'] || 0).toLocaleString()} flows
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Flow Predictions Table */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div>
-                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
-                  Flow Prediction Telemetry
-                </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Select any flow record to inspect SHAP waterfall attribution and counterfactual recourse in Step 04.
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase mb-1 border ${
+                    predictionResult.is_attack
+                      ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  }`}
+                >
+                  {predictionResult.is_attack ? 'Malicious Traffic Detected' : 'Clean Network Traffic'}
+                </span>
+                <h3 className="text-xl lg:text-2xl font-black tracking-tight text-white">
+                  {predictionResult.verdict_title}
+                </h3>
+                <p
+                  className={`text-sm font-semibold mt-0.5 ${
+                    predictionResult.is_attack ? 'text-red-300' : 'text-emerald-300'
+                  }`}
+                >
+                  Status: {predictionResult.status}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Inference Pipeline: {predictionResult.model_architecture} ({predictionResult.feature_count_used} features verified)
                 </p>
               </div>
+            </div>
 
-              <div className="flex items-center gap-2 text-xs font-mono">
+            {/* Empirical Probability Indicators */}
+            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 min-w-[280px] space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Class Probabilities:</span>
+                <span className="text-slate-300 font-bold">Model Confidence</span>
+              </div>
+
+              {/* Benign Probability Bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-emerald-400 font-semibold">Benign:</span>
+                  <span className="text-slate-200 font-bold">
+                    {predictionResult.benign_probability !== null && predictionResult.benign_probability !== undefined
+                      ? `${(predictionResult.benign_probability * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${
+                        predictionResult.benign_probability !== null && predictionResult.benign_probability !== undefined
+                          ? Math.min(100, Math.max(0, predictionResult.benign_probability * 100))
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Attack Probability Bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-red-400 font-semibold">Cyber Attack:</span>
+                  <span className="text-slate-200 font-bold">
+                    {predictionResult.attack_probability !== null && predictionResult.attack_probability !== undefined
+                      ? `${(predictionResult.attack_probability * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                  <div
+                    className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${
+                        predictionResult.attack_probability !== null && predictionResult.attack_probability !== undefined
+                          ? Math.min(100, Math.max(0, predictionResult.attack_probability * 100))
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation Error Banner */}
+      {validationError && (
+        <div className="bg-red-950/60 border border-red-500/50 rounded-xl p-4 flex items-start gap-3 text-red-200">
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold text-red-300">Validation Error</h4>
+            <p className="text-[11px] text-red-200 leading-relaxed">{validationError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Input Workspace */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        {/* Input Mode Toggle Bar & Controls */}
+        <div className="bg-slate-950/70 border-b border-slate-800 p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 w-fit">
+            <button
+              onClick={() => setActiveTab('form')}
+              type="button"
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                activeTab === 'form'
+                  ? 'bg-cyan-600 text-white font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              Method 1: Manual Input Form ({schema?.feature_count ?? 78} Features)
+            </button>
+            <button
+              onClick={() => setActiveTab('json')}
+              type="button"
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                activeTab === 'json'
+                  ? 'bg-cyan-600 text-white font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Code className="w-3.5 h-3.5" />
+              Method 2: JSON Specification
+            </button>
+          </div>
+
+          {/* Predict Attack CTA Button */}
+          <div className="flex items-center gap-3">
+            {missingFeatures.length > 0 && (
+              <span className="text-[11px] text-amber-400">
+                {missingFeatures.length} required field{missingFeatures.length > 1 ? 's' : ''} empty
+              </span>
+            )}
+            <button
+              onClick={handlePredict}
+              disabled={isPredicting || missingFeatures.length > 0}
+              type="button"
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-md ${
+                isPredicting || missingFeatures.length > 0
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                  : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-400 shadow-cyan-500/20'
+              }`}
+            >
+              {isPredicting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  Inferring...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  PREDICT ATTACK
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Tab 1: Structured Manual Form */}
+        {activeTab === 'form' && (
+          <div className="p-5 space-y-6">
+            {/* Search filter for finding features */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter network features by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-md pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <div className="text-[11px] text-slate-400 flex items-center gap-3">
+                <span>Total Model Features: <strong className="text-white">{schema?.feature_count ?? 78}</strong></span>
+                <span>•</span>
+                <span>Filled: <strong className="text-emerald-400">{(schema?.feature_count ?? 78) - missingFeatures.length}</strong></span>
+                {missingFeatures.length > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-400">Remaining: <strong>{missingFeatures.length}</strong></span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Categorized Groups */}
+            <div className="space-y-4">
+              {schema?.groups.map((group: FeatureGroupMeta) => {
+                const isCollapsed = !!collapsedGroups[group.category_id];
+                const matchingFeatures = group.features.filter((f) =>
+                  searchTerm.trim() === '' || f.name.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                if (searchTerm.trim() !== '' && matchingFeatures.length === 0) {
+                  return null;
+                }
+
+                return (
+                  <div
+                    key={group.category_id}
+                    className="border border-slate-800 rounded-lg overflow-hidden bg-slate-950/40"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleGroupCollapse(group.category_id)}
+                      className="w-full px-4 py-3 bg-slate-950/90 flex items-center justify-between hover:bg-slate-800/50 transition-colors text-left"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-white tracking-wide">
+                            {group.title}
+                          </h4>
+                          <span className="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.2 rounded">
+                            {matchingFeatures.length} features
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">{group.description}</p>
+                      </div>
+                      <div className="text-slate-400 p-1">
+                        {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                      </div>
+                    </button>
+
+                    {!isCollapsed && (
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 border-t border-slate-800/80">
+                        {matchingFeatures.map((feat) => {
+                          const val = featureValues[feat.name] ?? '';
+                          const isMissing = val.trim() === '';
+
+                          return (
+                            <div
+                              key={feat.name}
+                              className={`p-2.5 rounded-lg border transition-all ${
+                                isMissing
+                                  ? 'bg-slate-950/90 border-amber-500/30'
+                                  : 'bg-slate-900/90 border-slate-800 focus-within:border-cyan-500'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1 mb-1.5">
+                                <label
+                                  htmlFor={`input-${feat.name}`}
+                                  className="text-[11px] font-semibold text-slate-300 truncate max-w-[200px]"
+                                  title={feat.name}
+                                >
+                                  {feat.label}
+                                </label>
+                                <div className="group relative flex items-center">
+                                  <Info className="w-3 h-3 text-slate-500 hover:text-cyan-400 cursor-help" />
+                                  <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover:block w-56 p-2 rounded bg-slate-950 text-slate-200 text-[10px] border border-slate-700 shadow-xl z-20 pointer-events-none">
+                                    {feat.description}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <input
+                                id={`input-${feat.name}`}
+                                type="number"
+                                step="any"
+                                value={val}
+                                onChange={(e) => handleFeatureChange(feat.name, e.target.value)}
+                                placeholder="0.0"
+                                className={`w-full bg-slate-950 border rounded px-2.5 py-1 text-xs text-white font-mono focus:outline-none transition-colors ${
+                                  isMissing
+                                    ? 'border-amber-500/50 focus:border-amber-400'
+                                    : 'border-slate-800 focus:border-cyan-500'
+                                }`}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: JSON Specification */}
+        {activeTab === 'json' && (
+          <div className="p-5 space-y-4">
+            <div className="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-white">Direct JSON Feature Record</h4>
+                <p className="text-[11px] text-slate-400">
+                  Paste or edit complete network-flow key-value pairs. All {schema?.feature_count ?? 78} model features must be present.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 disabled:opacity-30 border border-slate-800"
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const parsed = JSON.parse(jsonInput);
+                      setJsonInput(JSON.stringify(parsed, null, 2));
+                      setJsonError(null);
+                    } catch (e: any) {
+                      setJsonError(`Cannot format invalid JSON: ${e.message}`);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-700 hover:border-slate-600 rounded text-[11px] text-slate-300 hover:text-white"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <Code className="w-3.5 h-3.5" />
+                  Format JSON
                 </button>
-                <span className="text-slate-400 text-[11px]">
-                  Page <strong className="text-white">{currentPage}</strong> of {totalPages}
-                </span>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 disabled:opacity-30 border border-slate-800"
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(jsonInput);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-700 hover:border-slate-600 rounded text-[11px] text-slate-300 hover:text-white"
                 >
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy JSON
                 </button>
               </div>
             </div>
 
-            <div className="overflow-x-auto mt-3">
-              <table className="w-full text-left border-collapse font-mono text-xs">
-                <thead>
-                  <tr className="border-b border-slate-800 text-[10px] uppercase text-slate-500 font-semibold">
-                    <th className="py-2 px-3">Flow #</th>
-                    {isLabeled && <th className="py-2 px-3">Ground Truth</th>}
-                    <th className="py-2 px-3">Prediction</th>
-                    <th className="py-2 px-3">Confidence</th>
-                    <th className="py-2 px-3">Features Snapshot</th>
-                    <th className="py-2 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50">
-                  {paginatedRows.map((row) => {
-                    const isAtt = row.prediction === 'Attack';
-                    return (
-                      <tr key={row.index} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-2.5 px-3 font-semibold text-slate-300">
-                          #{row.index}
-                        </td>
+            {jsonError && (
+              <div className="bg-red-950/60 border border-red-500/50 rounded-lg p-3 text-red-200 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{jsonError}</span>
+              </div>
+            )}
 
-                        {isLabeled && (
-                          <td className="py-2.5 px-3">
-                            <span
-                              className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
-                                row.ground_truth === 'Attack'
-                                  ? 'bg-rose-500/10 text-rose-400'
-                                  : 'bg-emerald-500/10 text-emerald-400'
-                              }`}
-                            >
-                              {row.ground_truth}
-                            </span>
-                          </td>
-                        )}
-
-                        <td className="py-2.5 px-3">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                              isAtt
-                                ? 'bg-rose-500/10 text-rose-300 border-rose-500/20'
-                                : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${isAtt ? 'bg-rose-500' : 'bg-emerald-400'}`} />
-                            {row.prediction}
-                          </span>
-                        </td>
-
-                        <td className="py-2.5 px-3 text-slate-200">
-                          {(row.confidence * 100).toFixed(1)}%
-                        </td>
-
-                        <td className="py-2.5 px-3">
-                          <div className="flex items-center gap-2 max-w-xs overflow-hidden text-[10px] text-slate-400">
-                            {Object.entries(row.features || {})
-                              .slice(0, 3)
-                              .map(([k, v]) => (
-                                <span key={k} className="truncate bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                                  {k}: {typeof v === 'number' ? v.toFixed(1) : v}
-                                </span>
-                              ))}
-                          </div>
-                        </td>
-
-                        <td className="py-2.5 px-3 text-right">
-                          <button
-                            onClick={() => onSelectFlowForExplain(row.index)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-cyan-600 hover:text-white text-slate-300 text-[11px] rounded transition-colors"
-                          >
-                            <span>Explain</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="relative">
+              <textarea
+                rows={22}
+                value={jsonInput}
+                onChange={(e) => handleJsonChange(e.target.value)}
+                className="w-full bg-slate-950 font-mono text-xs text-cyan-300 border border-slate-800 rounded-lg p-4 focus:outline-none focus:border-cyan-500 leading-relaxed tracking-wide"
+                placeholder='{ "Destination Port": 80, "Flow Duration": 12000, ... }'
+                spellCheck={false}
+              />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* VIEW 2: Interactive Experiment Comparison */}
-      {viewTab === 'compare' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 font-mono">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                Multi-Experiment Comparative Benchmarks
-              </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Side-by-side performance comparison across all trained models and strategies in the session ledger.
-              </p>
-            </div>
-            <span className="text-xs text-slate-500">
-              {allRuns.length} Recorded Experiments
-            </span>
-          </div>
-
-          {loadingRuns ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              Loading experiment ledger...
-            </div>
-          ) : allRuns.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              No previous experiments found. Train multiple models in Step 03 to unlock comparative benchmarking.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 bg-slate-950 text-[10px] uppercase text-slate-500 font-semibold">
-                    <th className="py-2.5 px-3">Run Name / ID</th>
-                    <th className="py-2.5 px-3">Strategy</th>
-                    <th className="py-2.5 px-3">Model</th>
-                    <th className="py-2.5 px-3">Accuracy</th>
-                    <th className="py-2.5 px-3">Precision</th>
-                    <th className="py-2.5 px-3">Recall (TPR)</th>
-                    <th className="py-2.5 px-3">F1 Score</th>
-                    <th className="py-2.5 px-3">False Alarm (FPR)</th>
-                    <th className="py-2.5 px-3">Train Latency</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-                  {allRuns.map((run) => {
-                    const isCurrent = run.experiment_id === experimentResult.experiment_id;
-                    return (
-                      <tr
-                        key={run.experiment_id}
-                        className={`transition-colors ${
-                          isCurrent ? 'bg-cyan-950/20 text-white font-semibold' : 'hover:bg-slate-800/30 text-slate-300'
-                        }`}
-                      >
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            {isCurrent && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                            )}
-                            <span className="truncate max-w-[160px] font-bold" title={run.name}>
-                              {run.name}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-500 block">{run.created_at?.slice(0, 16)}</span>
-                        </td>
-
-                        <td className="py-3 px-3 uppercase text-[10px] text-slate-400">
-                          {run.strategy || 'ensemble'}
-                        </td>
-
-                        <td className="py-3 px-3 truncate max-w-[140px]">
-                          {run.model_name || 'Ensemble'}
-                        </td>
-
-                        <td className="py-3 px-3 font-semibold text-white">
-                          {run.accuracy !== null && run.accuracy !== undefined
-                            ? `${(run.accuracy * 100).toFixed(2)}%`
-                            : '— (Unlabeled)'}
-                        </td>
-
-                        <td className="py-3 px-3 text-cyan-400">
-                          {run.precision !== null && run.precision !== undefined
-                            ? `${(run.precision * 100).toFixed(2)}%`
-                            : '—'}
-                        </td>
-
-                        <td className="py-3 px-3 text-cyan-400">
-                          {run.recall !== null && run.recall !== undefined
-                            ? `${(run.recall * 100).toFixed(2)}%`
-                            : '—'}
-                        </td>
-
-                        <td className="py-3 px-3 text-emerald-400 font-bold">
-                          {run.f1_score !== null && run.f1_score !== undefined
-                            ? `${(run.f1_score * 100).toFixed(2)}%`
-                            : '—'}
-                        </td>
-
-                        <td className="py-3 px-3 text-amber-400">
-                          {run.false_positive_rate !== null && run.false_positive_rate !== undefined
-                            ? `${(run.false_positive_rate * 100).toFixed(2)}%`
-                            : '—'}
-                        </td>
-
-                        <td className="py-3 px-3 text-slate-400">
-                          {run.training_time_seconds ? `${run.training_time_seconds.toFixed(2)}s` : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

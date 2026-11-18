@@ -45,6 +45,7 @@ class EnsembleBuilder:
                 n_estimators=int(p.get("n_estimators", 50)),
                 max_depth=int(p["max_depth"]) if p.get("max_depth") else 14,
                 min_samples_split=int(p.get("min_samples_split", 5)),
+                min_samples_leaf=int(p.get("min_samples_leaf", 2)),
                 class_weight=cw,
                 random_state=random_seed,
                 n_jobs=1,
@@ -80,6 +81,8 @@ class EnsembleBuilder:
             return ExtraTreesClassifier(
                 n_estimators=int(p.get("n_estimators", 50)),
                 max_depth=int(p["max_depth"]) if p.get("max_depth") else 14,
+                min_samples_leaf=int(p.get("min_samples_leaf", 2)),
+                min_samples_split=int(p.get("min_samples_split", 5)),
                 random_state=random_seed,
                 n_jobs=1,
             )
@@ -188,6 +191,8 @@ class EnsembleBuilder:
         else: # random_forest
             return RandomForestClassifier(
                 n_estimators=config.n_estimators,
+                max_depth=config.max_depth,
+                min_samples_leaf=2,
                 max_samples=config.max_samples if config.max_samples < 1.0 else None,
                 bootstrap=config.bootstrap,
                 random_state=random_seed,

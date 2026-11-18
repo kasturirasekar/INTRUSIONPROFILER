@@ -57,6 +57,18 @@ export const ModelPerformance: React.FC = () => {
   });
 
   const cm = data.confusion_matrix_active;
+  const activeBenchmark =
+    data.models_compared.find(
+      (model) =>
+        data.active_model_name.toLowerCase().includes(model.model.toLowerCase()) ||
+        model.model.toLowerCase().includes(data.active_model_name.toLowerCase())
+    ) ?? data.models_compared.find((model) => model.is_ensemble);
+  const falsePositiveRate = cm.true_negatives + cm.false_positives > 0
+    ? cm.false_positives / (cm.true_negatives + cm.false_positives)
+    : 0;
+  const attackRecall = cm.true_positives + cm.false_negatives > 0
+    ? cm.true_positives / (cm.true_positives + cm.false_negatives)
+    : 0;
 
   return (
     <div className="p-6 sm:p-8 space-y-6 animate-fade-in max-w-7xl mx-auto">
@@ -92,14 +104,20 @@ export const ModelPerformance: React.FC = () => {
             {data.active_model_name}
           </h2>
           <p className="text-xs text-soc-muted max-w-2xl">
-            Trained on the Canadian Institute for Cybersecurity (CIC-IDS-2017) benchmark dataset. Utilizes multi-model ensemble learning (hierarchical Stacking and Soft Voting) to synergize heterogeneous base learners, achieving peak attack detection (99.58% F1) with minimal false alarms and robust generalization across unseen network flow traffic.
+            Trained on all 190,427 available CIC-IDS-2017 training flows and evaluated on 47,607 held-out flows. Train and holdout scores are shown separately so generalization gaps remain visible.
           </p>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-mono shrink-0">
           <div className="p-3 rounded-lg bg-soc-secondary/70 border border-soc-border">
-            <span className="text-soc-muted block">Ensemble Architecture</span>
-            <span className="text-soc-text font-bold">Stacking (LR + DT + RF)</span>
+            <span className="text-soc-muted block">Active Architecture</span>
+            <span className="text-soc-text font-bold">{activeBenchmark?.model || data.active_model_name}</span>
+          </div>
+          <div className="p-3 rounded-lg bg-soc-secondary/70 border border-soc-border">
+            <span className="text-soc-muted block">Ensemble Strategy</span>
+            <span className="text-soc-accent font-bold">
+              {activeBenchmark?.is_ensemble ? 'Stacking (LR + DT + RF)' : 'Baseline Model'}
+            </span>
           </div>
           <div className="p-3 rounded-lg bg-soc-secondary/70 border border-soc-border">
             <span className="text-soc-muted block">Feature Vectors</span>
@@ -113,7 +131,7 @@ export const ModelPerformance: React.FC = () => {
         {/* Confusion Matrix Card */}
         <div className="bg-soc-card border border-soc-border rounded-xl p-6 shadow-card">
           <h3 className="text-sm font-bold tracking-tight text-soc-text uppercase font-mono mb-1">
-            Confusion Matrix (Ensemble Model Test Evaluation)
+            Confusion Matrix (Active Model Test Evaluation)
           </h3>
           <p className="text-xs text-soc-muted mb-4">
             Ground Truth vs Predicted on 47,607 holdout records
@@ -138,7 +156,7 @@ export const ModelPerformance: React.FC = () => {
                 {cm.false_positives.toLocaleString()}
               </span>
               <span className="text-[10px] text-soc-critical flex items-center justify-center gap-1 mt-0.5">
-                <XCircle className="w-3 h-3" /> 0.08% False Rate
+                <XCircle className="w-3 h-3" /> {(falsePositiveRate * 100).toFixed(2)}% False Rate
               </span>
             </div>
 
@@ -160,7 +178,7 @@ export const ModelPerformance: React.FC = () => {
                 {cm.true_positives.toLocaleString()}
               </span>
               <span className="text-[10px] text-soc-low flex items-center justify-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3 h-3" /> 99.43% Recall
+                <CheckCircle2 className="w-3 h-3" /> {(attackRecall * 100).toFixed(2)}% Recall
               </span>
             </div>
           </div>
@@ -258,6 +276,8 @@ export const ModelPerformance: React.FC = () => {
                 <th className="pb-3 font-semibold">Model Architecture</th>
                 <th className="pb-3 font-semibold">Type</th>
                 <th className="pb-3 font-semibold">Overall Accuracy</th>
+                <th className="pb-3 font-semibold">Train Accuracy</th>
+                <th className="pb-3 font-semibold">Train–Test Gap</th>
                 <th className="pb-3 font-semibold">Attack Precision</th>
                 <th className="pb-3 font-semibold">Attack Recall</th>
                 <th className="pb-3 font-semibold">Attack F1</th>
@@ -268,7 +288,7 @@ export const ModelPerformance: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-soc-border/40 text-xs font-mono">
               {filteredModels.map((row) => {
-                const isSelected = row.model.toLowerCase().includes('stacking') || row.model === data.active_model_name;
+                const isSelected = row.model.toLowerCase() === activeBenchmark?.model.toLowerCase();
 
                 return (
                   <tr
@@ -298,6 +318,8 @@ export const ModelPerformance: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 text-soc-text">{(row.accuracy * 100).toFixed(2)}%</td>
+                    <td className="py-3 text-soc-muted">{row.training_accuracy == null ? 'N/A' : `${(row.training_accuracy * 100).toFixed(2)}%`}</td>
+                    <td className="py-3 text-soc-muted">{row.generalization_gap == null ? 'N/A' : `${(row.generalization_gap * 100).toFixed(2)} pp`}</td>
                     <td className="py-3 text-soc-text">{(row.precision_attack * 100).toFixed(2)}%</td>
                     <td className="py-3 text-soc-text">{(row.recall_attack * 100).toFixed(2)}%</td>
                     <td className="py-3 text-soc-accent font-bold">{(row.f1_attack * 100).toFixed(2)}%</td>

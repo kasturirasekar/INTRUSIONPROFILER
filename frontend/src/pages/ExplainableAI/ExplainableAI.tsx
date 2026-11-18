@@ -15,6 +15,11 @@ import {
   ShieldAlert,
   ShieldCheck,
   RefreshCw,
+  Code,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  Play,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import {
@@ -50,6 +55,44 @@ export const ExplainableAI: React.FC = () => {
   const [explanation, setExplanation] = useState<PredictionExplanationResponse | null>(null);
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
   const [targetedFeatureDeepDive, setTargetedFeatureDeepDive] = useState<string | undefined>(undefined);
+
+  // Custom Flow / JSON state
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [customJsonInput, setCustomJsonInput] = useState('');
+  const [customJsonError, setCustomJsonError] = useState<string | null>(null);
+
+  const handleOpenCustomInput = () => {
+    if (activeFlowFeatures) {
+      setCustomJsonInput(JSON.stringify(activeFlowFeatures, null, 2));
+    }
+    setCustomJsonError(null);
+    setIsCustomModalOpen(true);
+  };
+
+  const handleApplyCustomFlow = () => {
+    try {
+      const parsed = JSON.parse(customJsonInput);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        setCustomJsonError('JSON must be a valid key-value object of network features.');
+        return;
+      }
+      setActiveFlowFeatures(parsed);
+      setSelectedFlowId('CUSTOM-FLOW-001');
+      setIsCustomModalOpen(false);
+      triggerExplain(parsed, 'CUSTOM-FLOW-001');
+      setActiveTab('prediction');
+    } catch (e: any) {
+      setCustomJsonError(`JSON Syntax Error: ${e.message}`);
+    }
+  };
+
+  const handleLoadPreset = (type: 'attack' | 'benign') => {
+    const found = sampleFlows.find((s) => (type === 'attack' ? s.ground_truth === 'Attack' : s.ground_truth === 'Benign'));
+    if (found) {
+      setCustomJsonInput(JSON.stringify(found.features, null, 2));
+      setCustomJsonError(null);
+    }
+  };
 
   // Load sample flows on mount
   useEffect(() => {
@@ -167,6 +210,14 @@ export const ExplainableAI: React.FC = () => {
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingExplanation ? 'animate-spin' : ''}`} />
               Explain Flow
             </button>
+
+            <button
+              onClick={handleOpenCustomInput}
+              className="px-3 py-1.5 rounded-lg bg-soc-card border border-soc-border text-xs text-cyan-400 hover:border-cyan-400 hover:bg-cyan-950/20 font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <Code className="w-3.5 h-3.5" />
+              Custom Flow / JSON
+            </button>
           </div>
         </div>
       </div>
@@ -233,6 +284,104 @@ export const ExplainableAI: React.FC = () => {
           <ExplainabilityReportView explanation={explanation} />
         )}
       </div>
+
+      {/* Custom Flow / JSON Input Modal */}
+      {isCustomModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden font-mono text-xs">
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Code className="w-4 h-4 text-cyan-400" />
+                <h3 className="font-bold text-white text-sm">Input Custom Network Flow for Prediction & XAI</h3>
+              </div>
+              <button
+                onClick={() => setIsCustomModalOpen(false)}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              <p className="text-slate-400 text-xs">
+                Provide custom network traffic feature values in JSON format to obtain real-time predictions and full explainability from the trained Stacking Ensemble.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleLoadPreset('benign')}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300 rounded text-[11px]"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  Load Benign Sample
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLoadPreset('attack')}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-300 rounded text-[11px]"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                  Load Attack Sample
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const p = JSON.parse(customJsonInput);
+                      setCustomJsonInput(JSON.stringify(p, null, 2));
+                      setCustomJsonError(null);
+                    } catch (e: any) {
+                      setCustomJsonError(`Invalid JSON: ${e.message}`);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 rounded text-[11px] ml-auto"
+                >
+                  <Code className="w-3.5 h-3.5" />
+                  Format JSON
+                </button>
+              </div>
+
+              {customJsonError && (
+                <div className="bg-red-950/60 border border-red-500/50 rounded-lg p-3 text-red-200 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{customJsonError}</span>
+                </div>
+              )}
+
+              <textarea
+                rows={16}
+                value={customJsonInput}
+                onChange={(e) => setCustomJsonInput(e.target.value)}
+                className="w-full bg-slate-950 font-mono text-xs text-cyan-300 border border-slate-800 rounded-lg p-4 focus:outline-none focus:border-cyan-500 leading-relaxed"
+                placeholder='{ "Destination Port": 80, "Flow Duration": 12000, ... }'
+                spellCheck={false}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsCustomModalOpen(false)}
+                className="px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyCustomFlow}
+                className="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Predict & Explain Flow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

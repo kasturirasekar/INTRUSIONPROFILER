@@ -48,6 +48,9 @@ export const Step03TrainPredict: React.FC<Step03TrainPredictProps> = ({
   );
   const [isLaunching, setIsLaunching] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [sampleIndex, setSampleIndex] = useState(0);
+  const [samplePrediction, setSamplePrediction] = useState<import('../../types/studio').StudioSamplePredictionResponse | null>(null);
+  const [isPredictingSample, setIsPredictingSample] = useState(false);
 
   // Poll status while running
   useEffect(() => {
@@ -92,6 +95,20 @@ export const Step03TrainPredict: React.FC<Step03TrainPredictProps> = ({
       setErrorMsg(err.message || 'Failed to start experiment.');
     } finally {
       setIsLaunching(false);
+    }
+  };
+
+  const handleSamplePrediction = async () => {
+    if (!results) return;
+    setIsPredictingSample(true);
+    setErrorMsg(null);
+    try {
+      const prediction = await api.predictStudioHeldoutSample(results.experiment_id, sampleIndex);
+      setSamplePrediction(prediction);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Could not predict the selected sample flow.');
+    } finally {
+      setIsPredictingSample(false);
     }
   };
 
@@ -212,11 +229,24 @@ export const Step03TrainPredict: React.FC<Step03TrainPredictProps> = ({
             </div>
 
             {results.is_labeled ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 text-xs">
                 <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Accuracy</span>
+                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Holdout accuracy</span>
                   <span className="text-base font-bold text-white">
                     {(results.accuracy! * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Train accuracy</span>
+                  <span className="text-base font-bold text-slate-200">
+                    {results.training_accuracy == null ? 'N/A' : `${(results.training_accuracy * 100).toFixed(2)}%`}
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase block mb-1">Train–holdout gap</span>
+                  <span className={`text-base font-bold ${(results.generalization_gap ?? 0) > 0.05 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {results.generalization_gap == null ? 'N/A' : `${(results.generalization_gap * 100).toFixed(2)} pp`}
                   </span>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
@@ -238,6 +268,61 @@ export const Step03TrainPredict: React.FC<Step03TrainPredictProps> = ({
                   </span>
                 </div>
               </div>
+              <div className="p-4 rounded-lg bg-slate-900 border border-slate-800 space-y-3">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Try a sample flow with this trained model</h4>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Choose a record from this dataset’s held-out partition. The saved experiment preprocessing and trained model will profile it.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="text-[10px] uppercase tracking-wide text-slate-500">
+                    Held-out sample index (0–{Math.max(0, results.total_evaluated_records - 1)})
+                    <input
+                      type="number"
+                      min={0}
+                      max={Math.max(0, results.total_evaluated_records - 1)}
+                      value={sampleIndex}
+                      onChange={(e) => {
+                        setSampleIndex(Math.max(0, Math.min(results.total_evaluated_records - 1, Number(e.target.value) || 0)));
+                        setSamplePrediction(null);
+                      }}
+                      className="block mt-1 w-32 px-3 py-2 rounded-md bg-slate-950 border border-slate-700 text-xs text-white"
+                    />
+                  </label>
+                  <button
+                    onClick={handleSamplePrediction}
+                    disabled={isPredictingSample || !results.total_evaluated_records}
+                    className="px-4 py-2 rounded-md bg-cyan-700 hover:bg-cyan-600 disabled:opacity-50 text-white text-xs font-semibold"
+                  >
+                    {isPredictingSample ? 'Profiling…' : 'Predict sample flow'}
+                  </button>
+                </div>
+                {samplePrediction && (
+                  <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-3 p-3 rounded-md bg-slate-950 border border-slate-800">
+                    <div className="min-w-36">
+                      <span className="text-[10px] text-slate-500 uppercase block">Model prediction</span>
+                      <span className={`text-base font-bold ${samplePrediction.prediction.toLowerCase().includes('benign') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {samplePrediction.prediction}
+                      </span>
+                      <span className="block text-[10px] text-slate-400 mt-1">
+                        Confidence {(samplePrediction.confidence * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-slate-500 uppercase block mb-1">Sample features</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(samplePrediction.features).slice(0, 8).map(([name, value]) => (
+                          <span key={name} className="max-w-full truncate px-2 py-1 rounded bg-slate-900 text-[10px] text-slate-300" title={`${name}: ${String(value)}`}>
+                            {name}: {value === null ? 'missing' : String(value)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              </>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">

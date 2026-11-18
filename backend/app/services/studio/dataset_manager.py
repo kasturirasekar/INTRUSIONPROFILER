@@ -143,16 +143,23 @@ class StudioDatasetManager:
         if task_type == "lightweight":
             sample_file = SAMPLES_DATA_DIR / "sample_lightweight_network_flows.csv"
         else:
-            sample_file = SAMPLES_DATA_DIR / f"sample_cic_{task_type}.csv"
+            # Prefer the repository's processed CIC training partition. The tiny
+            # demo CSV has overly separable labels and can make holdout scores
+            # look unrealistically perfect; keep it only as a fallback.
+            sample_file = PROCESSED_DATA_DIR / f"{task_type}_train.csv.gz"
+            if not sample_file.exists():
+                sample_file = SAMPLES_DATA_DIR / f"sample_cic_{task_type}.csv"
             if not sample_file.exists():
                 sample_file = SAMPLES_DATA_DIR / "sample_cic_binary.csv"
-            if not sample_file.exists():
-                sample_file = PROCESSED_DATA_DIR / f"{task_type}_test.csv.gz"
 
         if not sample_file.exists():
             raise HTTPException(status_code=404, detail="Sample benchmark dataset not found on disk.")
 
-        df = pd.read_csv(sample_file, nrows=max_rows)
+        df = pd.read_csv(sample_file)
+        if len(df) > max_rows:
+            # CIC source files are label-sorted; taking the first N rows would
+            # underrepresent attacks, especially rare multiclass labels.
+            df = df.sample(n=max_rows, random_state=42).sort_index().reset_index(drop=True)
         if task_type == "multiclass" and "target" in df.columns:
             if df["target"].dtype in [int, np.int64, np.int32]:
                 df["target"] = df["target"].map(CIC_MULTICLASS_MAP).fillna("Other")
@@ -193,11 +200,15 @@ class StudioDatasetManager:
         # Check sample datasets directory
         if dataset_id.startswith("sample_cic_ids_"):
             task_type = "multiclass" if "multiclass" in dataset_id else "binary"
-            sample_file = SAMPLES_DATA_DIR / f"sample_cic_{task_type}.csv"
+            sample_file = PROCESSED_DATA_DIR / f"{task_type}_train.csv.gz"
+            if not sample_file.exists():
+                sample_file = SAMPLES_DATA_DIR / f"sample_cic_{task_type}.csv"
             if not sample_file.exists():
                 sample_file = SAMPLES_DATA_DIR / "sample_cic_binary.csv"
             if sample_file.exists():
-                df = pd.read_csv(sample_file, nrows=5000)
+                df = pd.read_csv(sample_file)
+                if len(df) > 5000:
+                    df = df.sample(n=5000, random_state=42).sort_index().reset_index(drop=True)
                 if task_type == "multiclass" and "target" in df.columns:
                     if df["target"].dtype in [int, np.int64, np.int32]:
                         df["target"] = df["target"].map(CIC_MULTICLASS_MAP).fillna("Other")

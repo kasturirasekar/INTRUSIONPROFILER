@@ -12,6 +12,7 @@ import { LiveTraffic } from './pages/LiveTraffic';
 import { ThreatCenter } from './pages/ThreatCenter';
 import { NetworkAnalytics } from './pages/NetworkAnalytics';
 import { ModelPerformance } from './pages/ModelPerformance';
+import { ExplainableAI } from './pages/ExplainableAI/ExplainableAI';
 import { Studio } from './pages/Studio/Studio';
 import { ResearchStudio } from './pages/ResearchStudio';
 import { Reports } from './pages/Reports';
@@ -130,6 +131,8 @@ export const App: React.FC = () => {
           {currentTab === 'analytics' && <NetworkAnalytics />}
 
           {currentTab === 'model' && <ModelPerformance />}
+
+          {currentTab === 'xai' && <ExplainableAI />}
 
           {currentTab === 'studio' && <Studio />}
 

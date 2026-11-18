@@ -33,6 +33,11 @@ export const SeverityBadge: React.FC<SeverityBadgeProps> = ({ severity, size = '
       text: 'text-soc-normal',
       border: 'border-soc-normal/30',
     },
+    Unknown: {
+      bg: 'bg-soc-secondary',
+      text: 'text-soc-muted',
+      border: 'border-soc-border',
+    },
   };
 
   const sizeClasses = {

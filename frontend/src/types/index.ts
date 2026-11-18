@@ -1,4 +1,4 @@
-export type ThreatSeverity = 'Critical' | 'High' | 'Medium' | 'Low' | 'Normal';
+export type ThreatSeverity = 'Critical' | 'High' | 'Medium' | 'Low' | 'Normal' | 'Unknown';
 
 export interface HealthStatus {
   status: 'ok' | 'degraded' | 'error';
@@ -16,8 +16,8 @@ export interface FlowPredictionItem {
   flow_id: number;
   prediction: 'Benign' | 'Attack';
   is_attack: boolean;
-  attack_probability: number;
-  confidence: number;
+  attack_probability: number | null;
+  confidence: number | null;
   severity: ThreatSeverity;
   top_risk_features: string[];
   flow_metadata: Record<string, any>;
@@ -81,7 +81,7 @@ export interface NetworkFlowRecord {
   flow_bytes_per_sec: number | null;
   flow_packets_per_sec: number | null;
   prediction: 'Benign' | 'Attack';
-  attack_probability: number;
+  attack_probability: number | null;
   severity: ThreatSeverity;
   is_attack: boolean;
   timestamp_simulated: string;
@@ -147,6 +147,10 @@ export interface AnalyticsData {
 export interface ModelBenchmarkRow {
   model: string;
   accuracy: number;
+  training_accuracy?: number | null;
+  generalization_gap?: number | null;
+  training_accuracy?: number | null;
+  generalization_gap?: number | null;
   precision_attack: number;
   recall_attack: number;
   f1_attack: number;
@@ -191,4 +195,43 @@ export interface PredictionBatchResponse {
   medium_count: number;
   low_count: number;
   results: FlowPredictionItem[];
+}
+
+export interface InteractivePredictionResponse {
+  predicted_label: string;
+  verdict_title: string;
+  status: string;
+  is_attack: boolean;
+  confidence: number | null;
+  attack_probability: number | null;
+  benign_probability: number | null;
+  probabilities: Record<string, number>;
+  model_name: string;
+  model_architecture: string;
+  feature_count_used: number;
+}
+
+export interface FeatureFieldMeta {
+  name: string;
+  label: string;
+  category: string;
+  description: string;
+  data_type: string;
+  default_value: number;
+}
+
+export interface FeatureGroupMeta {
+  category_id: string;
+  title: string;
+  description: string;
+  features: FeatureFieldMeta[];
+}
+
+export interface PredictionSchemaResponse {
+  feature_names: string[];
+  feature_count: number;
+  groups: FeatureGroupMeta[];
+  classes: string[];
+  sample_benign: Record<string, number>;
+  sample_attack: Record<string, number>;
 }

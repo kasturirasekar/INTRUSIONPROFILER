@@ -94,6 +94,7 @@ class EnsembleConfig(BaseModel):
     # Bagging / Boosting specific
     base_estimator_id: str = "decision_tree"
     n_estimators: int = Field(default=50, ge=5, le=300)
+    max_depth: int = Field(default=12, ge=2, le=100)
     learning_rate: float = Field(default=0.1, ge=0.001, le=2.0)
     max_samples: float = Field(default=1.0, ge=0.1, le=1.0)
     subsample: float = Field(default=1.0, ge=0.1, le=1.0)

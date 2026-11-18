@@ -80,4 +80,7 @@ def train_and_evaluate_binary_model(
 
     metrics = evaluate_binary_model(model, X_test, y_test)
     metrics["training_time_seconds"] = training_time
+    train_predictions = model.predict(X_train)
+    metrics["training_accuracy"] = accuracy_score(y_train, train_predictions)
+    metrics["generalization_gap"] = metrics["training_accuracy"] - metrics["accuracy"]
     return metrics
